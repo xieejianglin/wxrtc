@@ -1,5 +1,6 @@
 [versions]
 agp = "8.5.1"
+maven = "2.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
@@ -13,6 +14,7 @@ annotation = "1.8.1"
 rxjava = "3.1.8"
 rxandroid = "3.0.2"
 luban = "1.1.8"
+wxrtc = "0.0.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -28,8 +30,10 @@ annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", versi
 rxjava = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxjava" }
 rxandroid = { group = "io.reactivex.rxjava3", name = "rxandroid", version.ref = "rxandroid" }
 luban = { group = "top.zibin", name = "Luban", version.ref = "luban" }
+wxrtc = { group = "com.github.xieejianglin", name = "wxrtc", version.ref = "wxrtc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
+android-maven = { id = "com.github.dcendents.android-maven", version.ref = "maven" }
 

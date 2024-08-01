@@ -50,7 +50,7 @@ dependencies {
     implementation libs.lifecycle.runtime
     implementation libs.constraintlayout
 
-//    implementation 'com.github.xieejianglin:wxrtc:0.0.1'
+//    implementation libs.wxrtc
 
     implementation project(':wxrtc')
 }

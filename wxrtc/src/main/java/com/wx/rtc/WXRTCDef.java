@@ -69,7 +69,7 @@ public class WXRTCDef {
     /**
      * 通话角色
      */
-    enum Role{
+    public enum Role{
         /**
          * 未知类型
          */
@@ -87,7 +87,7 @@ public class WXRTCDef {
     /**
      * 通话角色
      */
-    enum Status{
+    public enum Status{
         /**
          * 未定义
          */

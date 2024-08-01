@@ -20,7 +20,10 @@ public class ResultData {
     private String pid;                    // 人脸患者id
     private String asr_result;                    //语音识别结果
     private int gesture;                    //手势识别结果
-    private float SO2;                    //血氧仪
+    private String oxygen_saturation;                    //血氧含量
+    private String weight_scale;                    //体重
+    private String respiratory_rate;                    //呼吸率
+    private String capture_image_url;                   //识别出来的截图
 
     public int getRst() {
         return rst;
@@ -150,11 +153,35 @@ public class ResultData {
         this.gesture = gesture;
     }
 
-    public float getSO2() {
-        return SO2;
+    public String getOxygen_saturation() {
+        return oxygen_saturation;
     }
 
-    public void setSO2(float SO2) {
-        this.SO2 = SO2;
+    public void setOxygen_saturation(String oxygen_saturation) {
+        this.oxygen_saturation = oxygen_saturation;
+    }
+
+    public String getWeight_scale() {
+        return weight_scale;
+    }
+
+    public void setWeight_scale(String weight_scale) {
+        this.weight_scale = weight_scale;
+    }
+
+    public String getRespiratory_rate() {
+        return respiratory_rate;
+    }
+
+    public void setRespiratory_rate(String respiratory_rate) {
+        this.respiratory_rate = respiratory_rate;
+    }
+
+    public String getCapture_image_url() {
+        return capture_image_url;
+    }
+
+    public void setCapture_image_url(String capture_image_url) {
+        this.capture_image_url = capture_image_url;
     }
 }

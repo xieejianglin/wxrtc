@@ -57,4 +57,14 @@ public @interface RstType {
      * 血氧仪
      */
     int OXIMETER = 11;
+
+    /**
+     * 体重秤
+     */
+    int WEIGHT_SCALE = 12;
+
+    /**
+     * 心电监护仪
+     */
+    int ECG_MONITOR = 13;
 }

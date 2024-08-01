@@ -35,8 +35,8 @@ android {
     }
     publishing {
         singleVariant('release') {
-            withSourcesJar()
-            withJavadocJar()
+//            withSourcesJar()
+//            withJavadocJar()
         }
     }
 }
@@ -59,7 +59,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.xieejianglin"
                 artifactId = "wxrtc"
-                version = "0.0.1"
+                version = "0.0.2"
             }
         }
     }

@@ -1,0 +1,2 @@
+-keep class org.webrtc.** { *; }
+-keep class com.wx.rtc.**{*;}

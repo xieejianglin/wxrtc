@@ -109,6 +109,7 @@ object WXRTCDef {
     class WXRTCVideoEncParam {
         @JvmField
         var videoResolution: Int = WXRTC_VIDEO_RESOLUTION_1280_720
+        @JvmField
         var videoResolutionMode: Int = WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
         @JvmField
         var videoFps: Int = 25
@@ -119,6 +120,7 @@ object WXRTCDef {
     }
 
     class WXRTCRenderParams {
+        @JvmField
         var rotation: Int = WXRTC_VIDEO_ROTATION_0
 
         @JvmField

@@ -57,15 +57,15 @@ dependencies {
 }
 
 
-//afterEvaluate {
-//    publishing {
-//        publications {
-//            release(MavenPublication) {
-//                from(components["release"])
-//                groupId = "com.github.xieejianglin"
-//                artifactId = "wxrtc"
-//                version = "0.0.2"
-//            }
-//        }
-//    }
-//}
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("product") {
+                from(components["release"])
+                groupId = "com.github.xieejianglin"
+                artifactId = "wxrtc"
+                version = "0.0.3"
+            }
+        }
+    }
+}

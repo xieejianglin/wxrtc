@@ -21,3 +21,4 @@
 #-renamesourcefileattribute SourceFile
 -keep class org.webrtc.** { *; }
 -keep class com.wx.rtc.**{*;}
+-dontwarn java.lang.invoke.StringConcatFactory

@@ -20,8 +20,8 @@ import com.wx.rtc.bean.SendCommandMessage
 import com.wx.rtc.bean.SendCommandMessage.CallCmdDTO
 import com.wx.rtc.bean.SendCommandMessage.ProcessCmdListDTO
 import com.wx.rtc.bean.SendCommandMessage.RecordCmdDTO
-import com.wx.rtc.bean.SendCommandMessage.SpeakerDTO
 import com.wx.rtc.bean.SignalCommand
+import com.wx.rtc.bean.SpeakerDTO
 import com.wx.rtc.rtc.RTCListener
 import com.wx.rtc.rtc.RTCManager
 import com.wx.rtc.socket.SocketListener

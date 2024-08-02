@@ -80,16 +80,6 @@ internal class SendCommandMessage {
         var spkList: List<SpeakerDTO>? = null
     }
 
-    class SpeakerDTO {
-        @JvmField
-        @SerializedName("spk_id")
-        var spkId: Long? = null
-
-        @JvmField
-        @SerializedName("spk_name")
-        var spkName: String? = null
-    }
-
     class CallCmdDTO {
         @JvmField
         @SerializedName("cmd")

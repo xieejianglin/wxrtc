@@ -1,0 +1,65 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+}
+
+android {
+    namespace = "com.wx.rtc.test"
+    compileSdk = libs.versions.compileSdk.get().toInt()
+
+    defaultConfig {
+        applicationId = "com.wx.rtc.test"
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 1
+        versionName = "0.0.2"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        vectorDrawables.useSupportLibrary = true
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters += "armeabi-v7a"
+            //noinspection ChromeOsAbiSupport
+            abiFilters += "arm64-v8a"
+        }
+    }
+
+    buildTypes {
+        debug {
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    lint {
+        abortOnError = false
+    }
+}
+
+dependencies {
+    implementation(libs.core.ktx)
+    implementation(libs.kotlin.stdlib.jdk8)
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.annotation.jvm)
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.lifecycle.runtime)
+    implementation(libs.constraintlayout)
+
+    implementation(project(":wxrtc"))
+}

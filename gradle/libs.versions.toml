@@ -1,25 +1,35 @@
 [versions]
+compileSdk = "34"
+minSdk = "21"
+targetSdk = "30"
+
 agp = "8.5.1"
-maven = "2.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
 espressoCore = "3.6.1"
+kotlin = "2.0.0"
+kotlinxCoroutines = "1.8.1"
+coreKtx = "1.13.1"
 appcompat = "1.7.0"
 material = "1.12.0"
 constraintlayout = "2.1.4"
 lifecycle = "2.8.4"
 okhttp = "4.12.0"
-gson = "2.10.1"
+gson = "2.11.0"
 annotation = "1.8.1"
 rxjava = "3.1.8"
 rxandroid = "3.0.2"
 luban = "1.1.8"
-wxrtc = "0.0.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+kotlin-stdlib-jdk8 = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib-jdk8", version.ref = "kotlin" }
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
@@ -30,10 +40,10 @@ annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", versi
 rxjava = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxjava" }
 rxandroid = { group = "io.reactivex.rxjava3", name = "rxandroid", version.ref = "rxandroid" }
 luban = { group = "top.zibin", name = "Luban", version.ref = "luban" }
-wxrtc = { group = "com.github.xieejianglin", name = "wxrtc", version.ref = "wxrtc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-android-maven = { id = "com.github.dcendents.android-maven", version.ref = "maven" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-parcelize = { id = "org.jetbrains.kotlin.plugin.parcelize", version.ref = "kotlin" }
 

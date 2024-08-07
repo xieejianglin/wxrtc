@@ -2,15 +2,25 @@ package com.wx.rtc.rtc
 
 import android.content.Context
 import android.os.Environment
-import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
+import com.wx.rtc.rtc.RTCManager.Companion
+import com.wx.rtc.utils.RTCUtils
 import com.wx.rtc.utils.RTCUtils.getVideoResolution
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
 import org.webrtc.Camera1Capturer
@@ -94,7 +104,8 @@ import java.util.regex.Pattern
  */
 internal class PeerConnectionClient(
     private val appContext: Context, private val rootEglBase: EglBase,
-    private val peerConnectionParameters: PeerConnectionParameters, private val events: PeerConnectionEvents
+    private val userId: String, private val sendSdpUrl: String,
+    private val isPublish: Boolean, private val events: PeerConnectionEvents
 ) {
     // Executor thread is started once in private ctor and is used for all
     // peer connection API calls to ensure new peer connection factory is
@@ -113,10 +124,9 @@ internal class PeerConnectionClient(
     private var isError = false
     var localRender: VideoSink? = null
     var remoteSink: VideoSink? = null
+    private val peerConnectionParameters: PeerConnectionParameters = PeerConnectionParameters()
     private var signalingParameters: SignalingParameters? = null
-    private var videoWidth = 0
-    private var videoHeight = 0
-    private var videoFps = 0
+    private var videoParam: WXRTCVideoEncParam = WXRTCVideoEncParam()
     private var audioConstraints: MediaConstraints? = null
     private var sdpMediaConstraints: MediaConstraints? = null
 
@@ -152,44 +162,39 @@ internal class PeerConnectionClient(
     private var camera1Capturer: Camera1Capturer? = null
 
     var isNeedReconnect: Boolean = true
+//    var isPublish: Boolean = false
+//    private var sendSdpUrl: String? = null
+    var unpublishUrl: String? = null
 
     /**
      * Peer connection parameters.
      */
     class DataChannelParameters(
-        val ordered: Boolean, val maxRetransmitTimeMs: Int, val maxRetransmits: Int,
-        val protocol: String, val negotiated: Boolean, val id: Int
+        val ordered: Boolean = true, val maxRetransmitTimeMs: Int = -1, val maxRetransmits: Int = -1,
+        val protocol: String = "", val negotiated: Boolean = false, val id: Int = -1
     )
 
     /**
      * Peer connection parameters.
      */
     class PeerConnectionParameters(
-        val audioSendEnabled: Boolean,
-        val videoSendEnabled: Boolean,
-        val audioRecvEnabled: Boolean,
-        val videoRecvEnabled: Boolean,
-        val loopback: Boolean,
-        val tracing: Boolean,
-        var videoWidth: Int,
-        var videoHeight: Int,
-        var videoFps: Int,
-        var videoMaxBitrate: Int,
-        val videoCodec: String,
-        val videoCodecHwAcceleration: Boolean,
-        val videoFlexfecEnabled: Boolean,
-        val audioStartBitrate: Int,
-        val audioCodec: String?,
-        val noAudioProcessing: Boolean,
-        val aecDump: Boolean,
-        val saveInputAudioToFile: Boolean,
-        val useOpenSLES: Boolean,
-        val disableBuiltInAEC: Boolean,
-        val disableBuiltInAGC: Boolean,
-        val disableBuiltInNS: Boolean,
-        val disableWebRtcAGCAndHPF: Boolean,
-        val enableRtcEventLog: Boolean,
-        val dataChannelParameters: DataChannelParameters?
+        val loopback: Boolean = false,
+        val tracing: Boolean = false,
+        val videoCodec: String = VIDEO_CODEC_H264_BASELINE,
+        val videoCodecHwAcceleration: Boolean = true,
+        val videoFlexfecEnabled: Boolean = true,
+        val audioStartBitrate: Int = 0,
+        val audioCodec: String = AUDIO_CODEC_OPUS,
+        val noAudioProcessing: Boolean = false,
+        val aecDump: Boolean = false,
+        val saveInputAudioToFile: Boolean = false,
+        val useOpenSLES: Boolean = false,
+        val disableBuiltInAEC: Boolean = false,
+        val disableBuiltInAGC: Boolean = false,
+        val disableBuiltInNS: Boolean = false,
+        val disableWebRtcAGCAndHPF: Boolean = false,
+        val enableRtcEventLog: Boolean = false,
+        val dataChannelParameters: DataChannelParameters? = null
     )
 
     /**
@@ -263,7 +268,7 @@ internal class PeerConnectionClient(
      * ownership of |eglBase|.
      */
     init {
-        Log.d(TAG, "Preferred video codec: " + getSdpVideoCodecName(peerConnectionParameters))
+        Log.d(TAG, "Preferred video codec: ${getSdpVideoCodecName(peerConnectionParameters)}")
         val fieldTrials = getFieldTrials(peerConnectionParameters)
         executor.execute {
             Log.d(TAG, "Initialize WebRTC. Field trials: $fieldTrials")
@@ -276,13 +281,15 @@ internal class PeerConnectionClient(
         }
     }
 
-    fun setParameters(param: WXRTCVideoEncParam) {
-        val size = getVideoResolution(param.videoResolution)
-
-        peerConnectionParameters.videoWidth = size.width
-        peerConnectionParameters.videoHeight = size.height
-        peerConnectionParameters.videoFps = param.videoFps
-        peerConnectionParameters.videoMaxBitrate = param.videoMaxBitrate
+    fun setVideoEncParam(param: WXRTCVideoEncParam) {
+        if (videoParam.videoResolution != param.videoResolution || videoParam.videoFps != param.videoFps) {
+            val size = getVideoResolution(param.videoResolution)
+            changeVideoSource(size.width, size.height, param.videoFps)
+        }
+        if (videoParam.videoMinBitrate != param.videoMinBitrate || videoParam.videoMaxBitrate != param.videoMaxBitrate) {
+            setVideoBitrate(param.videoMinBitrate, param.videoMaxBitrate)
+        }
+        videoParam = param
     }
 
     /**
@@ -313,6 +320,9 @@ internal class PeerConnectionClient(
         this.remoteSink = remoteSink
         executor.execute {
             onConnectedToRoomInternal()
+//            remoteSink?.let {
+//                remoteVideoTrack?.addSink(it)
+//            }
         }
     }
 
@@ -365,17 +375,8 @@ internal class PeerConnectionClient(
         executor.execute { this.closeInternal() }
     }
 
-    val isVideoSendEnabled: Boolean
-        get() = peerConnectionParameters.videoSendEnabled
-
-    val isAudioSendEnabled: Boolean
-        get() = peerConnectionParameters.audioSendEnabled
-
-    val isVideoRecvEnabled: Boolean
-        get() = peerConnectionParameters.videoRecvEnabled
-
-    val isAudioRecvEnabled: Boolean
-        get() = peerConnectionParameters.audioRecvEnabled
+    val isPublishClient: Boolean
+        get() = isPublish
 
     val isCameraOpened: Boolean
         get() = !this.videoCapturerStopped
@@ -523,20 +524,9 @@ internal class PeerConnectionClient(
 
     private fun createMediaConstraintsInternal() {
         // Create video constraints if video call is enabled.
-        if (isVideoSendEnabled) {
-            videoWidth = peerConnectionParameters.videoWidth
-            videoHeight = peerConnectionParameters.videoHeight
-            videoFps = peerConnectionParameters.videoFps
-            // If video resolution is not specified, default to HD.
-            if (videoWidth == 0 || videoHeight == 0) {
-                videoWidth = HD_VIDEO_WIDTH
-                videoHeight = HD_VIDEO_HEIGHT
-            }
-            // If fps is not specified, default to 30.
-            if (videoFps == 0) {
-                videoFps = 30
-            }
-            Logging.d(TAG, "Capturing format: " + videoWidth + "x" + videoHeight + "@" + videoFps)
+        if (isPublish) {
+            val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
+            Logging.d(TAG, "Capturing format: ${size.width}x${size.height}@${videoParam.videoFps}")
         }
         // Create audio constraints.
         audioConstraints = MediaConstraints()
@@ -559,8 +549,8 @@ internal class PeerConnectionClient(
         // Create SDP constraints.
         sdpMediaConstraints = MediaConstraints().apply {
             mandatory?.let {
-                it.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", peerConnectionParameters.audioRecvEnabled.toString()))
-                it.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", peerConnectionParameters.videoRecvEnabled.toString()))
+                it.add(MediaConstraints.KeyValuePair("OfferToReceiveAudio", (!isPublish).toString()))
+                it.add(MediaConstraints.KeyValuePair("OfferToReceiveVideo", (!isPublish).toString()))
             }
         }
     }
@@ -643,27 +633,20 @@ internal class PeerConnectionClient(
         Logging.enableLogToDebugOutput(Logging.Severity.LS_INFO)
         val mediaStreamLabels = listOf("ARDAMS")
         videoCapturerStopped = true
-        if (isVideoSendEnabled) {
+        if (isPublish) {
             peerConnection!!.addTrack(createVideoTrack(false), mediaStreamLabels)
-        }
-        if (peerConnectionParameters.videoRecvEnabled) {
-            remoteVideoTrack =
-                peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO).receiver.track() as VideoTrack?
+            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
+
+            findVideoSender()
+        } else {
+            remoteVideoTrack = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO).receiver.track() as VideoTrack?
             // We can add the renderers right away because we don't need to wait for an
             // answer to get the remote track.
 //            remoteVideoTrack = getRemoteVideoTrack();
-            remoteVideoTrack!!.setEnabled(peerConnectionParameters.videoRecvEnabled)
+            remoteVideoTrack!!.setEnabled(true)
             remoteVideoTrack!!.addSink(remoteSink)
         }
-        if (peerConnectionParameters.audioSendEnabled) {
-            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
-        }
-        //        if (peerConnectionParameters.audioSendEnabled) {
-//            peerConnection.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO);
-//        }
-        if (isVideoSendEnabled) {
-            findVideoSender()
-        }
+
         if (peerConnectionParameters.aecDump) {
             try {
                 val aecDumpFileDescriptor =
@@ -732,7 +715,7 @@ internal class PeerConnectionClient(
         surfaceTextureHelper?.dispose()
         surfaceTextureHelper = null
         localRender = null
-        remoteSink = null
+//        remoteSink = null
         Log.d(TAG, "Closing peer connection factory.")
         factory?.dispose()
         factory = null
@@ -742,9 +725,6 @@ internal class PeerConnectionClient(
         PeerConnectionFactory.stopInternalTracingCapture()
         PeerConnectionFactory.shutdownInternalTracer()
     }
-
-    private val isHDVideo: Boolean
-        get() = isVideoSendEnabled && videoWidth * videoHeight >= 1280 * 720
 
     private val stats: Unit
         get() {
@@ -775,6 +755,95 @@ internal class PeerConnectionClient(
             }
         } else {
             statsTimer.cancel()
+        }
+    }
+
+    private fun sendOfferSdp(sdp: SessionDescription) {
+        val sdpDes = sdp.description
+        val client = OkHttpClient()
+
+        val body: RequestBody = sdpDes.toRequestBody("application/sdp".toMediaType())
+        val requst: Request = Request.Builder()
+            .url(sendSdpUrl)
+            .header("Content-type", "application/sdp")
+            .post(body)
+            .build()
+        client.newCall(requst).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                Log.e(TAG, "$sendSdpUrl onFailure: $e")
+                CoroutineScope(Dispatchers.IO).launch {
+                    delay(1000L)
+                    Log.e(TAG, "sendOfferSdp onResponse unsuccess sendOfferSdp")
+                    sendOfferSdp(sdp)
+                }
+            }
+
+            @Throws(IOException::class)
+            override fun onResponse(call: Call, response: Response) {
+                if (response.isSuccessful) {
+                    val sdpString = response.body!!.string()
+                    Log.e(TAG, "$sendSdpUrl onResponse: $sdpString")
+
+                    val answerSdp = SessionDescription(
+                        SessionDescription.Type.fromCanonicalForm("answer"),
+                        sdpString
+                    )
+                    setRemoteDescription(answerSdp)
+                } else {
+                    if (response.code == 502 && isPublish) {
+                        Log.e(TAG, "sendOfferSdp 502 deletePublish")
+                        deletePublish({
+                            CoroutineScope(Dispatchers.IO).launch {
+                                delay(200L)
+                                sendOfferSdp(sdp)
+                            }
+                        })
+                    }else{
+                        CoroutineScope(Dispatchers.IO).launch {
+                            delay(1000L)
+                            Log.e(TAG, "sendOfferSdp onResponse unsuccess sendOfferSdp")
+                            sendOfferSdp(sdp)
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    private fun deletePublish(successBlock: (()->Unit)? = null, failureBlock: (()->Unit)? = null) {
+        unpublishUrl?.let{ url ->
+            val client = OkHttpClient()
+
+            val requst: Request = Request.Builder()
+                .url(url)
+                .delete()
+                .build()
+            client.newCall(requst).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    Log.e(TAG, "deletePublish onFailure: $e")
+                    failureBlock?.invoke()
+                    CoroutineScope(Dispatchers.IO).launch {
+                        delay(1000L)
+                        Log.e(TAG, "deletePublish onFailure deletePublish")
+                        deletePublish(successBlock, failureBlock)
+                    }
+                }
+
+                @Throws(IOException::class)
+                override fun onResponse(call: Call, response: Response) {
+                    if (response.isSuccessful) {
+                        Log.e(TAG, "deletePublish onResponse: " + response.body!!.string())
+                        successBlock?.invoke()
+                    } else {
+                        failureBlock?.invoke()
+                        CoroutineScope(Dispatchers.IO).launch {
+                            delay(1000L)
+                            Log.e(TAG, "deletePublish onFailure deletePublish")
+                            deletePublish(successBlock, failureBlock)
+                        }
+                    }
+                }
+            })
         }
     }
 
@@ -929,7 +998,7 @@ internal class PeerConnectionClient(
             if (preferIsac) {
                 sdpDescription = preferCodec(sdpDescription, AUDIO_CODEC_ISAC, true)
             }
-            if (isVideoSendEnabled) {
+            if (isPublish) {
                 sdpDescription =
                     preferCodec(
                         sdpDescription,
@@ -968,7 +1037,8 @@ internal class PeerConnectionClient(
                     videoSource!!.capturerObserver
                 )
                 Log.d(TAG, "Restart video source.")
-                startCapture(videoWidth, videoHeight, videoFps)
+                val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
+                startCapture(size.width, size.height, videoParam.videoFps)
                 videoCapturerStopped = false
             }
         }
@@ -987,11 +1057,8 @@ internal class PeerConnectionClient(
         }
     }
 
-    fun changeVideoSource(width: Int, height: Int, framerate: Int) {
+    private fun changeVideoSource(width: Int, height: Int, framerate: Int) {
         executor.execute {
-            videoWidth = width
-            videoHeight = height
-            videoFps = framerate
             videoCapturer?.let {
                 Log.d(TAG, "change video source.")
                 it.changeCaptureFormat(width, height, framerate)
@@ -1044,10 +1111,8 @@ internal class PeerConnectionClient(
             }
             for (encoding in parameters.encodings) {
                 // Null value means no limit.
-                encoding.maxBitrateBps =
-                    if (maxBitrateKbps == null) null else maxBitrateKbps * BPS_IN_KBPS
-                encoding.minBitrateBps =
-                    if (minBitrateKbps == null) null else minBitrateKbps * BPS_IN_KBPS
+                encoding.maxBitrateBps = if (maxBitrateKbps == null) null else maxBitrateKbps * BPS_IN_KBPS
+                encoding.minBitrateBps = if (minBitrateKbps == null) null else minBitrateKbps * BPS_IN_KBPS
             }
             if (!localVideoSender!!.setParameters(parameters)) {
                 Log.e(TAG, "RtpSender.setParameters failed.")
@@ -1081,7 +1146,7 @@ internal class PeerConnectionClient(
         videoSource = factory!!.createVideoSource(isScreencast)
 
         localVideoTrack = factory!!.createVideoTrack(VIDEO_TRACK_ID, videoSource)
-        localVideoTrack?.setEnabled(peerConnectionParameters!!.videoSendEnabled)
+        localVideoTrack?.setEnabled(true)
         localVideoTrack?.addSink(localRender)
 
         videoSource?.setVideoProcessor(object : VideoProcessor {
@@ -1145,10 +1210,10 @@ internal class PeerConnectionClient(
 
     private fun switchCameraInternal() {
         if (videoCapturer is CameraVideoCapturer) {
-            if (!isVideoSendEnabled || isError) {
+            if (!isPublish || isError) {
                 Log.e(
                     TAG,
-                    "Failed to switch camera. Video: $isVideoSendEnabled . Error : $isError"
+                    "Failed to switch camera. Video: $isPublish . Error : $isError"
                 )
                 return  // No video is sent or only one camera is available or error happened.
             }
@@ -1169,10 +1234,10 @@ internal class PeerConnectionClient(
     }
 
     private fun changeCaptureFormatInternal(width: Int, height: Int, framerate: Int) {
-        if (!isVideoSendEnabled || isError || videoCapturer == null) {
+        if (!isPublish || isError || videoCapturer == null) {
             Log.e(
                 TAG,
-                "Failed to change capture format. Video: " + isVideoSendEnabled
+                "Failed to change capture format. Video: $isPublish"
                         + ". Error : " + isError
             )
             return
@@ -1221,7 +1286,8 @@ internal class PeerConnectionClient(
                 if (iceHostGet && (iceStunGet || iceTurnGet) && !iceComplete) {
                     iceComplete = true
                     CoroutineScope(Dispatchers.Main).launch {
-                        delay(3000L)
+                        delay(1000L)
+                        sendOfferSdp(peerConnection!!.localDescription)
                         events.onIceGatheringComplete(
                             this@PeerConnectionClient, peerConnection!!.localDescription
                         )
@@ -1260,8 +1326,12 @@ internal class PeerConnectionClient(
             executor.execute {
                 Log.d(TAG, "PeerConnectionState: $newState")
                 if (newState == PeerConnectionState.CONNECTED) {
+                    iceHostGet = false
+                    iceStunGet = false
+                    iceTurnGet = false
+                    iceComplete = false
                     enableStatsEvents(true, 1000)
-                    if (!peerConnectionParameters.videoSendEnabled) {
+                    if (!isPublish) {
                         stopVideoSource()
                     }
 
@@ -1271,8 +1341,29 @@ internal class PeerConnectionClient(
                     events.onConnected(this@PeerConnectionClient)
                 } else if (newState == PeerConnectionState.DISCONNECTED) {
                     events.onDisconnected(this@PeerConnectionClient)
+                    peerConnection?.close()
                 } else if (newState == PeerConnectionState.FAILED) {
                     reportError("DTLS connection failed.")
+                } else if (newState == PeerConnectionState.CLOSED) {
+                    peerConnection?.dispose()
+                    peerConnection = null
+
+                    if (isNeedReconnect) {
+                        executor.execute {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                withContext(Dispatchers.Main) {
+                                    isError = false
+                                    try {
+                                        createPeerConnectionInternal()
+                                    } catch (e: Exception) {
+                                        reportError("Failed to create peer connection: " + e.message)
+                                        throw e
+                                    }
+                                    startCall(localRender, remoteSink)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1282,6 +1373,7 @@ internal class PeerConnectionClient(
                 Log.d(TAG, "IceGatheringState: $newState")
                 if (newState == IceGatheringState.COMPLETE && !iceComplete) {
                     iceComplete = true
+                    sendOfferSdp(peerConnection!!.localDescription)
                     events.onIceGatheringComplete(
                         this@PeerConnectionClient,
                         peerConnection!!.localDescription
@@ -1352,10 +1444,10 @@ internal class PeerConnectionClient(
     // as well as adding remote ICE candidates once the answer SDP is set.
     private inner class SDPObserver : SdpObserver {
         override fun onCreateSuccess(origSdp: SessionDescription) {
-            if (localSdp != null) {
-                reportError("Multiple SDP create.")
-                return
-            }
+//            if (localSdp != null) {
+//                reportError("Multiple SDP create.")
+//                return
+//            }
             var sdpDescription = origSdp.description
             if (!sdpDescription.contains("a=extmap-allow-mixed")) {
                 val lines = sdpDescription.split("\r\n".toRegex()).dropLastWhile { it.isEmpty() }
@@ -1378,7 +1470,7 @@ internal class PeerConnectionClient(
             if (preferIsac) {
                 sdpDescription = preferCodec(sdpDescription, AUDIO_CODEC_ISAC, true)
             }
-            if (isVideoSendEnabled) {
+            if (isPublish) {
                 sdpDescription =
                     preferCodec(
                         sdpDescription,
@@ -1499,8 +1591,8 @@ internal class PeerConnectionClient(
         private const val HD_VIDEO_HEIGHT = 720
         private const val BPS_IN_KBPS = 1000
         private const val RTCEVENTLOG_OUTPUT_DIR_NAME = "rtc_event_log"
-        private fun getSdpVideoCodecName(parameters: PeerConnectionParameters?): String {
-            return when (parameters!!.videoCodec) {
+        private fun getSdpVideoCodecName(parameters: PeerConnectionParameters): String {
+            return when (parameters.videoCodec) {
                 VIDEO_CODEC_VP8 -> VIDEO_CODEC_VP8
                 VIDEO_CODEC_VP9 -> VIDEO_CODEC_VP9
                 VIDEO_CODEC_H264_HIGH, VIDEO_CODEC_H264_BASELINE -> VIDEO_CODEC_H264

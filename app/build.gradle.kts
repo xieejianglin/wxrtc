@@ -49,6 +49,9 @@ android {
     lint {
         abortOnError = false
     }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
 }
 
 dependencies {

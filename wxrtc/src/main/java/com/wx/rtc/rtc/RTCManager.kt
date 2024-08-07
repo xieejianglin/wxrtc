@@ -64,9 +64,6 @@ internal class RTCManager : PeerConnectionEvents {
     private val eglBase: EglBase = EglBase.create()
     private var mContext: Context? = null
     private var mVideoEncParam: WXRTCVideoEncParam = WXRTCVideoEncParam()
-    private var mPublishSendOfferJob: Job? = null
-    private var mRTCReconnectJob: Job? = null
-    private var mDeletePublishJob: Job? = null
 
     private val localProxyVideoSink = ProxyVideoSink()
 
@@ -83,10 +80,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun setRTCVideoParam(param: WXRTCVideoEncParam) {
         this.mVideoEncParam = param
         publishPCClient?.let { client ->
-            client.setParameters(param)
-            val size = getVideoResolution(param.videoResolution)
-            client.changeVideoSource(size.width, size.height, param.videoFps)
-            client.setVideoBitrate(param.videoMinBitrate, param.videoMaxBitrate)
+            client.setVideoEncParam(param)
         }
     }
 
@@ -95,70 +89,53 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     fun startPublish(publishUrl: String, userId: String) {
+        if (mStartPublish) {
+            return
+        }
         this.publishUrl = publishUrl
         mStartPublish = true
 
-        val size = getVideoResolution(mVideoEncParam.videoResolution)
-
-        val peerConnectionParameters =
-            PeerConnectionParameters(
-                true, true, false, false,
-                false, false, size.width, size.height, mVideoEncParam.videoFps,
-                mVideoEncParam.videoMaxBitrate, "H264 Baseline",
-                true,
-                true,
-                0, "opus",
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false, null
-            )
-
         publishPCClient = PeerConnectionClient(
             mContext!!.applicationContext,
-            eglBase,
-            peerConnectionParameters,
+            eglBase, userId, publishUrl, true,
             this
-        )
-        val options = PeerConnectionFactory.Options()
+        ).apply {
+            val options = PeerConnectionFactory.Options()
 
-        options.networkIgnoreMask = 0
-        //        options.disableEncryption = true;
+            options.networkIgnoreMask = 0
+            //        options.disableEncryption = true;
 //        options.disableNetworkMonitor = true;
-        publishPCClient!!.setLocalVideoTrackEnabled(publishVideoSendEnabled)
-        publishPCClient!!.setRemoteVideoTrackEnabled(false)
-        publishPCClient!!.setLocalAudioTrackEnabled(publishAudioSendEnabled)
-        publishPCClient!!.createPeerConnectionFactory(options)
+            this.setLocalVideoTrackEnabled(publishVideoSendEnabled)
+            this.setLocalAudioTrackEnabled(publishAudioSendEnabled)
+            this.setRemoteVideoTrackEnabled(false)
+            this.createPeerConnectionFactory(options)
 
-        localProxyVideoSink.setTarget(userId, localRenderer)
+            localProxyVideoSink.setTarget(userId, localRenderer)
 
-        setRTCVideoParam(mVideoEncParam)
+            setRTCVideoParam(mVideoEncParam)
 
-        publishRenderParams?.let {
-            setLocalRenderParams(it)
+            publishRenderParams?.let {
+                setLocalRenderParams(it)
+            }
+
+            muteLocalVideo(publishVideoMute)
+            muteLocalAudio(publishAudioMute)
+
+            this.startCall(localProxyVideoSink, null)
         }
 
-        muteLocalVideo(publishVideoMute)
-        muteLocalAudio(publishAudioMute)
 
-        publishPCClient!!.startCall(localProxyVideoSink, null)
     }
 
     fun setUnpublishUrl(unpublishUrl: String) {
         this.unpublishUrl = unpublishUrl
+        publishPCClient?.unpublishUrl = unpublishUrl
     }
 
     fun stopAllPC() {
-        mStartPublish = false
-
         publishPCClient?.isNeedReconnect = false
 
-        unpublish()
+        stopPublish()
 
         stopAllPull()
     }
@@ -166,7 +143,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun startOnePull(pullUrl: String, userId: String) {
         var pcm = getPeerConnectionManagerByUserId(userId)
 
-        val pc = startPull(userId, pullUrl, true, true)
+        val pc = startPull(userId, pullUrl)
 
         if (pcm == null) {
             pcm = PeerConnectionManager()
@@ -205,40 +182,6 @@ internal class RTCManager : PeerConnectionEvents {
         }
 
         pc.startCall(null, pcm.videoSink)
-    }
-
-    private fun reconnect(pc: PeerConnectionClient) {
-        if (webRTCReconnectNum < Config.RECONNECT_MAX_NUM) {
-            Log.d(TAG, "webrtc reconnect...")
-            if (mRTCReconnectJob?.isActive == true) {
-                mRTCReconnectJob!!.cancel()
-            }
-            mRTCReconnectJob = CoroutineScope(Dispatchers.IO).launch {
-                delay(RECONNECT_MILLIS)
-                withContext(Dispatchers.Main) {
-                    if (pc == publishPCClient) {
-                        init(mContext!!)
-                    } else {
-                        val audioRecvEnabled = pc.isAudioRecvEnabled
-                        val videoRecvEnabled = pc.isVideoRecvEnabled
-
-                        val pcm = getPeerConnectionManagerByPc(pc) ?: return@withContext
-
-                        val streamUrl = pcm.sendSdpUrl!!
-                        val userId = pcm.userId!!
-
-                        pcm.videoSink?.release()
-
-                        pcManagers.remove(pcm)
-
-                        startPull(userId, streamUrl, audioRecvEnabled, videoRecvEnabled)
-                    }
-                    webRTCReconnectNum++
-                }
-            }
-        } else {
-            Log.e(TAG, "webSocket reconnect fail, reconnect num more than $RECONNECT_MAX_NUM, please check url!")
-        }
     }
 
     private fun setLocalRenderer(renderer: SurfaceViewRenderer?) {
@@ -557,24 +500,11 @@ internal class RTCManager : PeerConnectionEvents {
 
     fun destory() {
         publishPCClient?.isNeedReconnect = false
-        unpublish()
+        stopPublish()
         setLocalRenderer(null)
         stopAllPull()
 
         publishPCClient = null
-
-        if (mPublishSendOfferJob?.isActive == true) {
-            mPublishSendOfferJob!!.cancel()
-            mPublishSendOfferJob = null
-        }
-        if (mRTCReconnectJob?.isActive == true) {
-            mRTCReconnectJob!!.cancel()
-            mRTCReconnectJob = null
-        }
-        if (mDeletePublishJob?.isActive == true) {
-            mDeletePublishJob!!.cancel()
-            mDeletePublishJob = null
-        }
 
         eglBase.release()
     }
@@ -597,220 +527,46 @@ internal class RTCManager : PeerConnectionEvents {
         return filePath
     }
 
-    private fun startPull(
-        userId: String,
-        streamUrl: String,
-        audioRecvEnabled: Boolean,
-        videoRecvEnabled: Boolean
-    ): PeerConnectionClient {
-        val audioSendEnabled = false
-        val videoSendEnabled = false
-
-        val size = getVideoResolution(mVideoEncParam.videoResolution)
-
-        val peerConnectionParameters =
-            PeerConnectionParameters(
-                audioSendEnabled, videoSendEnabled, audioRecvEnabled, videoRecvEnabled,
-                false, false, size.width, size.height, mVideoEncParam.videoFps,
-                mVideoEncParam.videoMaxBitrate, "H264 Baseline",
-                true,
-                true,
-                0, "opus",
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false, null
-            )
-
-        val pc = PeerConnectionClient(
+    private fun startPull(userId: String, streamUrl: String): PeerConnectionClient {
+        return PeerConnectionClient(
             mContext!!.applicationContext,
-            eglBase,
-            peerConnectionParameters,
+            eglBase, userId, streamUrl, false,
             this
-        )
-        val options = PeerConnectionFactory.Options()
+        ).apply {
+            val options = PeerConnectionFactory.Options()
 
-        options.networkIgnoreMask = 0
-        //        options.disableEncryption = true;
+            options.networkIgnoreMask = 0
+            //        options.disableEncryption = true;
 //        options.disableNetworkMonitor = true;
-        pc.setLocalVideoTrackEnabled(videoSendEnabled)
-        pc.setRemoteVideoTrackEnabled(videoRecvEnabled)
-        pc.setLocalAudioTrackEnabled(audioSendEnabled)
-        pc.createPeerConnectionFactory(options)
-
-        return pc
-    }
-
-    private fun sendPublishSdp(pc: PeerConnectionClient, sdp: SessionDescription) {
-        sendOfferSdp(pc, publishUrl!!, sdp)
-    }
-
-    private fun sendPullSdp(pc: PeerConnectionClient, sdp: SessionDescription) {
-        getPeerConnectionManagerByPc(pc)?.let { pcm ->
-            sendOfferSdp(pc, pcm.sendSdpUrl!!, sdp)
+            this.setLocalVideoTrackEnabled(false)
+            this.setLocalAudioTrackEnabled(false)
+            this.createPeerConnectionFactory(options)
         }
     }
 
-    private fun sendOfferSdp(pc: PeerConnectionClient, url: String, sdp: SessionDescription) {
-        if (pc == publishPCClient) {
-            if (mPublishSendOfferJob?.isActive == true) {
-                mPublishSendOfferJob!!.cancel()
-            }
-        }
-
-        val sdpDes = sdp.description
-        val client = OkHttpClient()
-
-        val body: RequestBody = sdpDes.toRequestBody("application/sdp".toMediaType())
-        val requst: Request = Request.Builder()
-            .url(url)
-            .header("Content-type", "application/sdp")
-            .post(body)
-            .build()
-        client.newCall(requst).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "$url onFailure: $e")
-                if (pc == publishPCClient) {
-                    if (mPublishSendOfferJob?.isActive == true) {
-                        mPublishSendOfferJob!!.cancel()
-                    }
-                }
-                val job = CoroutineScope(Dispatchers.IO).launch {
-                    delay(2000L)
-                    if (mStartPublish) {
-                        Log.e(TAG, "sendOfferSdp onResponse unsuccess sendOfferSdp")
-                        sendOfferSdp(pc, url, sdp)
-                    }
-                }
-                if (pc == publishPCClient) {
-                    mPublishSendOfferJob = job
-                }
-            }
-
-            @Throws(IOException::class)
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    val sdpString = response.body!!.string()
-                    Log.e(TAG, "$url onResponse: $sdpString")
-
-                    if (pc == publishPCClient) {
-                        if (mPublishSendOfferJob?.isActive == true) {
-                            mPublishSendOfferJob!!.cancel()
-                        }
-                    }
-                    if (mDeletePublishJob?.isActive == true) {
-                        mDeletePublishJob!!.cancel()
-                    }
-
-                    val answerSdp = SessionDescription(
-                        SessionDescription.Type.fromCanonicalForm("answer"),
-                        sdpString
-                    )
-                    pc!!.setRemoteDescription(answerSdp)
-                } else {
-                    if (pc == publishPCClient) {
-                        if (response.code == 502) {
-                            Log.e(TAG, "sendOfferSdp 502 deletePublish")
-                            deletePublish()
-                        }
-                        if (mPublishSendOfferJob?.isActive == true) {
-                            mPublishSendOfferJob!!.cancel()
-                        }
-                    }
-                    val job = CoroutineScope(Dispatchers.IO).launch {
-                        delay(2000L)
-                        if (mStartPublish) {
-                            Log.e(TAG, "sendOfferSdp onResponse unsuccess sendOfferSdp")
-                            sendOfferSdp(pc, url, sdp)
-                        }
-                    }
-                    if (pc == publishPCClient) {
-                        mPublishSendOfferJob = job
-                    }
-                }
-            }
-        })
-    }
-
-    private fun deletePublish() {
-        if (TextUtils.isEmpty(unpublishUrl)) {
-            return
-        }
-
-        if (mDeletePublishJob?.isActive == true) {
-            mDeletePublishJob!!.cancel()
-        }
-
-        val client = OkHttpClient()
-
-        val requst: Request = Request.Builder()
-            .url(unpublishUrl!!)
-            .delete()
-            .build()
-        client.newCall(requst).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                Log.e(TAG, "deletePublish onFailure: $e")
-                if (mDeletePublishJob?.isActive == true) {
-                    mDeletePublishJob!!.cancel()
-                }
-                mDeletePublishJob = CoroutineScope(Dispatchers.IO).launch {
-                    delay(1000L)
-                    Log.e(TAG, "deletePublish onFailure deletePublish")
-                    deletePublish()
-                }
-            }
-
-            @Throws(IOException::class)
-            override fun onResponse(call: Call, response: Response) {
-                if (mDeletePublishJob?.isActive == true) {
-                    mDeletePublishJob!!.cancel()
-                }
-                if (response.isSuccessful) {
-                    Log.e(
-                        TAG, "deletePublish onResponse: " + response.body!!
-                            .string()
-                    )
-                } else {
-                    mDeletePublishJob = CoroutineScope(Dispatchers.IO).launch {
-                        delay(1000L)
-                        Log.e(TAG, "deletePublish onFailure deletePublish")
-                        deletePublish()
-                    }
-                }
-            }
-        })
-    }
-
-    private fun unpublish() {
+    private fun stopPublish() {
         Log.e(TAG, "unpublish onResponse")
-        deletePublish()
+        stopLocalVideo()
+        stopLocalAudio()
 
+        mStartPublish = false
         publishPCClient?.let { client ->
-            client.stopVideoSource()
-            client.setLocalVideoTrackEnabled(false)
-
-            client.stopAudioCapture()
-            client.setLocalAudioTrackEnabled(false)
-
+            client.isNeedReconnect = false
             client.close()
         }
     }
 
-
-    private fun stopPull(userId: String) {
+    fun stopPull(userId: String) {
         getPeerConnectionManagerByUserId(userId)?.let { pcm ->
             pcm.client?.let { client ->
                 stopPull(client)
+                pcm.client = null
             }
         }
     }
 
     private fun stopPull(pc: PeerConnectionClient) {
+        pc.isNeedReconnect = false
         pc.close()
     }
 
@@ -837,9 +593,9 @@ internal class RTCManager : PeerConnectionEvents {
                     } else {
                         stopLocalVideo()
                     }
+                    pc.setVideoEncParam(mVideoEncParam)
                 }
             }
-            pc.setVideoBitrate(mVideoEncParam.videoMinBitrate, mVideoEncParam.videoMaxBitrate)
         }
     }
 
@@ -854,15 +610,6 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     override fun onIceGatheringComplete(pc: PeerConnectionClient, sdp: SessionDescription) {
-        CoroutineScope(Dispatchers.Main).launch {
-            if (pc == publishPCClient) {
-                if (mStartPublish) {
-                    sendPublishSdp(pc, sdp)
-                }
-            } else {
-                sendPullSdp(pc, sdp)
-            }
-        }
     }
 
     override fun onIceConnected(pc: PeerConnectionClient) {
@@ -873,9 +620,6 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     override fun onConnected(pc: PeerConnectionClient) {
-        if (mRTCReconnectJob?.isActive == true) {
-            mRTCReconnectJob!!.cancel()
-        }
         val delta = System.currentTimeMillis() - callStartedTimeMs
         CoroutineScope(Dispatchers.Main).launch {
             publishPCClient?.let {
@@ -892,32 +636,9 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     override fun onDisconnected(pc: PeerConnectionClient) {
-        CoroutineScope(Dispatchers.Main).launch {
-            if (pc == publishPCClient) {
-                unpublish()
-            } else {
-                stopPull(pc)
-            }
-        }
     }
 
     override fun onPeerConnectionClosed(pc: PeerConnectionClient) {
-        CoroutineScope(Dispatchers.Main).launch {
-            if (pc.isNeedReconnect) {
-                reconnect(pc)
-            } else {
-                if (pc == publishPCClient) {
-                    publishPCClient = null
-                    mRTCListener?.onClose()
-                } else {
-                    val pcm = getPeerConnectionManagerByPc(pc) ?: return@launch
-
-                    pcm.videoSink?.release()
-
-                    pcManagers.remove(pcm)
-                }
-            }
-        }
     }
 
     override fun onPeerConnectionStatsReady(
@@ -927,14 +648,6 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     override fun onPeerConnectionError(pc: PeerConnectionClient, description: String) {
-        CoroutineScope(Dispatchers.Main).launch {
-            pc.isNeedReconnect = true
-            if (pc == publishPCClient) {
-                unpublish()
-            } else {
-                stopPull(pc)
-            }
-        }
     }
 
     override fun onDataChannelMessage(pc: PeerConnectionClient, message: String) {

@@ -601,6 +601,7 @@ class WXRTC : SocketListener, RTCListener {
     }
 
     override fun onRemoteUserLeaveRoom(userId: String, reason: Int) {
+        mRTCManager.stopPull(userId)
         mRTCListener?.onRemoteUserLeaveRoom(userId, reason)
         mCallListener?.onUserLeave(userId)
     }

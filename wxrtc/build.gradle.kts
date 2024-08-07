@@ -64,7 +64,7 @@ afterEvaluate {
                 from(components["release"])
                 groupId = "com.github.xieejianglin"
                 artifactId = "wxrtc"
-                version = "0.0.3"
+                version = libs.versions.versionName.get()
             }
         }
     }

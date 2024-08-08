@@ -58,6 +58,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     private fun init() {
         mWXRTC.init(this)
+
         mWXRTC.login("100000", mUserId)
 
         val param = WXRTCVideoEncParam()
@@ -68,6 +69,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         param.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT
         mWXRTC.setRTCVideoParam(param)
         mWXRTC.setRTCListener(this)
+
+        val params = WXRTCDef.WXRTCRenderParams()
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
+        params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
+        params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
+        mWXRTC.setLocalRenderParams(params)
 
         snapshotButton?.setOnClickListener {
             snapshotVideo(mUserId);

@@ -106,27 +106,27 @@ object WXRTCDef {
         Connected,
     }
 
-    class WXRTCVideoEncParam {
+    class WXRTCVideoEncParam (
         @JvmField
-        var videoResolution: Int = WXRTC_VIDEO_RESOLUTION_1280_720
+        var videoResolution: Int = WXRTC_VIDEO_RESOLUTION_1280_720,
         @JvmField
-        var videoResolutionMode: Int = WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
+        var videoResolutionMode: Int = WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE,
         @JvmField
-        var videoFps: Int = 25
+        var videoFps: Int = 25,
         @JvmField
-        var videoMinBitrate: Int = 2000
+        var videoMinBitrate: Int = 2000,
         @JvmField
-        var videoMaxBitrate: Int = 2500
-    }
+        var videoMaxBitrate: Int = 2500,
+    )
 
-    class WXRTCRenderParams {
+    class WXRTCRenderParams (
         @JvmField
-        var rotation: Int = WXRTC_VIDEO_ROTATION_0
-
-        @JvmField
-        var fillMode: Int = WXRTC_VIDEO_RENDER_MODE_FILL
+        var rotation: Int = WXRTC_VIDEO_ROTATION_0,
 
         @JvmField
-        var mirrorType: Int = WXRTC_VIDEO_MIRROR_TYPE_AUTO
-    }
+        var fillMode: Int = WXRTC_VIDEO_RENDER_MODE_FILL,
+
+        @JvmField
+        var mirrorType: Int = WXRTC_VIDEO_MIRROR_TYPE_AUTO,
+    )
 }

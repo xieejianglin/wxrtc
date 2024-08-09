@@ -2,7 +2,7 @@
 compileSdk = "34"
 minSdk = "21"
 targetSdk = "30"
-versionName = "0.0.4.3"
+versionName = "0.0.5.1"
 
 agp = "8.5.1"
 junit = "4.13.2"
@@ -21,6 +21,7 @@ annotation = "1.8.1"
 rxjava = "3.1.8"
 rxandroid = "3.0.2"
 luban = "1.1.8"
+utilcodex = "1.31.1"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -41,6 +42,7 @@ annotation-jvm = { group = "androidx.annotation", name = "annotation-jvm", versi
 rxjava = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxjava" }
 rxandroid = { group = "io.reactivex.rxjava3", name = "rxandroid", version.ref = "rxandroid" }
 luban = { group = "top.zibin", name = "Luban", version.ref = "luban" }
+utilcodex = { group = "com.blankj", name = "utilcodex", version.ref = "utilcodex" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -31,7 +31,7 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
 
         localVideo = findViewById(R.id.localVideo);
 
-        mWXRTC = WXRTC.Companion.getInstance();
+        mWXRTC = WXRTC.getInstance();
         mWXRTC.init(this);
 
         WXRTCDef.WXRTCVideoEncParam param = new WXRTCDef.WXRTCVideoEncParam();
@@ -42,6 +42,12 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
         param.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT;
         mWXRTC.setRTCVideoParam(param);
         mWXRTC.setRTCListener(this);
+
+        WXRTCDef.WXRTCRenderParams params = new WXRTCDef.WXRTCRenderParams();
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL;
+        params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0;
+        params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO;
+        mWXRTC.setLocalRenderParams(params);
 
         mWXRTC.login("100000", mUserId);
     }

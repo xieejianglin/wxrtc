@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.material)
     implementation(libs.lifecycle.runtime)
     implementation(libs.constraintlayout)
+    implementation(libs.gson)
+    implementation(libs.utilcodex)
 
     implementation(project(":wxrtc"))
 }

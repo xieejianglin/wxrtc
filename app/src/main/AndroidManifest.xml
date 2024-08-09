@@ -17,6 +17,8 @@
         tools:targetApi="30">
         <activity
             android:name=".activity.MainActivity"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|screenSize|orientation"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

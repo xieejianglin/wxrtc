@@ -1,13 +1,13 @@
 package com.wx.rtc.test.activity
 
 import android.Manifest
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
-import android.view.Window
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageButton
@@ -15,6 +15,10 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.blankj.utilcode.util.ConvertUtils
+import com.blankj.utilcode.util.GsonUtils
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
 import com.wx.rtc.WXRTCDef
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
@@ -35,8 +39,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         )
     }
 
+    private val gson = GsonBuilder().disableHtmlEscaping().create()
     private var mWXRTC: WXRTC = WXRTC.getInstance()
     private val mUserId = "123456789"
+    private var localVideoInLocalView = true
+    private var isFrontCamera = false
+    private var remoteUserId: String? = null
 
     private val localVideoView: SurfaceViewRenderer?  by lazy { findViewById(R.id.localVideo) }
     private val remoteVideoView: SurfaceViewRenderer?  by lazy { findViewById(R.id.remoteVideo) }
@@ -44,6 +52,9 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val snapshotView: View?  by lazy { findViewById(R.id.cl_snapshot) }
     private val snapshotImage: ImageView?  by lazy { findViewById(R.id.iv_snapshot) }
     private val closeSnapshotButton: ImageButton?  by lazy { findViewById(R.id.btn_close_snapshot) }
+    private val changeVideoButton: Button?  by lazy { findViewById(R.id.btn_change_video) }
+    private val changeCameraButton: Button?  by lazy { findViewById(R.id.btn_change_camera) }
+    private val changeOrientationButton: Button?  by lazy { findViewById(R.id.btn_change_orientation) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -81,6 +92,46 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         }
         closeSnapshotButton?.setOnClickListener {
             snapshotView?.visibility = GONE
+        }
+        changeVideoButton?.setOnClickListener {
+            if (mWXRTC.isEnterRoom) {
+                localVideoInLocalView = !localVideoInLocalView
+                if (localVideoInLocalView) {
+                    mWXRTC.updateLocalVideo(localVideoView)
+                    remoteUserId?.let { userId ->
+                        mWXRTC.startRemoteVideo(userId, remoteVideoView)
+                    }
+                } else {
+                    mWXRTC.updateLocalVideo(remoteVideoView)
+                    localVideoView?.visibility = View.GONE
+                    remoteUserId?.let { userId ->
+                        mWXRTC.startRemoteVideo(userId, localVideoView)
+                    }
+                }
+            }
+        }
+        changeCameraButton?.setOnClickListener {
+            if (mWXRTC.isEnterRoom) {
+                isFrontCamera = !isFrontCamera
+                mWXRTC.switchCamera(isFrontCamera)
+            }
+        }
+        changeOrientationButton?.setOnClickListener {
+            if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                changeOrientationButton?.text = "竖屏"
+                localVideoView?.apply {
+                    layoutParams.width = ConvertUtils.dp2px(320f)
+                    layoutParams.height = ConvertUtils.dp2px(180f)
+                }
+            } else {
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                changeOrientationButton?.text = "横屏"
+                localVideoView?.apply {
+                    layoutParams.width = ConvertUtils.dp2px(180f)
+                    layoutParams.height = ConvertUtils.dp2px(320f)
+                }
+            }
         }
     }
 
@@ -139,6 +190,14 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         })
     }
 
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mWXRTC.endProcess()
+        mWXRTC.exitRoom()
+        mWXRTC.logout()
+    }
+
     override fun onError(errCode: Int, errMsg: String) {
         Toast.makeText(this, "$errCode:$errMsg", Toast.LENGTH_LONG).show()
     }
@@ -156,8 +215,11 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onEnterRoom() {
         Toast.makeText(this, "进入房间", Toast.LENGTH_SHORT).show()
-        mWXRTC.startLocalVideo(false, localVideoView)
+        localVideoInLocalView = false
+        mWXRTC.startLocalVideo(isFrontCamera, remoteVideoView)
         mWXRTC.startLocalAudio()
+
+        mWXRTC.startProcess()
     }
 
     override fun onExitRoom(reason: Int) {
@@ -166,11 +228,13 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onRemoteUserEnterRoom(userId: String) {
         Toast.makeText(this, userId + "进入房间", Toast.LENGTH_SHORT).show()
+        remoteUserId = userId
         mWXRTC.startRemoteVideo(userId, remoteVideoView)
     }
 
     override fun onRemoteUserLeaveRoom(userId: String, reason: Int) {
         Toast.makeText(this, userId + "退出房间", Toast.LENGTH_SHORT).show()
+        remoteUserId = null
         mWXRTC.stopRemoteVideo(userId)
     }
 
@@ -180,7 +244,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     override fun onResult(resultData: ResultData) {
-        Toast.makeText(this, "收到处理消息$resultData", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "收到处理消息${gson.toJson(resultData)}", Toast.LENGTH_SHORT).show()
     }
 
     override fun onRecordStart(fileName: String) {

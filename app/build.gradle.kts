@@ -49,8 +49,12 @@ android {
     lint {
         abortOnError = false
     }
-    kotlinOptions {
-        jvmTarget = "17"
+}
+
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        freeCompilerArgs.add("-Xjvm-default=all")
     }
 }
 

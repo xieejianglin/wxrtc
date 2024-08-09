@@ -8,7 +8,7 @@ internal class PeerConnectionManager {
     @JvmField
     var sendSdpUrl: String? = null
     @JvmField
-    var needReconnect: Boolean = false
+    var needReconnect: Boolean = true
     @JvmField
     var videoRecvEnabled: Boolean = false
     @JvmField

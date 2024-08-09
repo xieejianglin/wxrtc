@@ -686,9 +686,9 @@ class WXRTC : SocketListener, RTCListener {
 
         private var INSTANCE: WXRTC? = null
         private var socketUrl: String? = null
-        val instance: WXRTC?
-            get() = getInstance(null)
 
+        @JvmStatic
+        @JvmOverloads
         fun getInstance(url: String? = null): WXRTC {
             if (INSTANCE == null) {
                 INSTANCE = WXRTC()
@@ -697,6 +697,7 @@ class WXRTC : SocketListener, RTCListener {
             return INSTANCE!!
         }
 
+        @JvmStatic
         fun getSpeaker(userId: Long, userName: String): SpeakerDTO {
             val speaker = SpeakerDTO()
             speaker.spkId = userId

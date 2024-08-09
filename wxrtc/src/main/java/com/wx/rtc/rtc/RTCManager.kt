@@ -57,7 +57,7 @@ internal class RTCManager : PeerConnectionEvents {
     private var publishVideoSendEnabled = false
     private var publishVideoMute = false
     private var publishAudioMute = false
-    private var publishRenderParams: WXRTCRenderParams? = null
+    private var publishRenderParams: WXRTCRenderParams = WXRTCRenderParams()
     private var remoteVideoAllMute = false
     private var remoteAudioAllMute = false
     private var remoteAudioAllVolume = 0
@@ -114,9 +114,7 @@ internal class RTCManager : PeerConnectionEvents {
 
             setRTCVideoParam(mVideoEncParam)
 
-            publishRenderParams?.let {
-                setLocalRenderParams(it)
-            }
+            setLocalRenderParams(publishRenderParams)
 
             muteLocalVideo(publishVideoMute)
             muteLocalAudio(publishAudioMute)
@@ -181,6 +179,7 @@ internal class RTCManager : PeerConnectionEvents {
             pcm.videoSink = ProxyVideoSink()
         }
 
+        pc.isNeedReconnect = pcm.needReconnect
         pc.startCall(null, pcm.videoSink)
     }
 
@@ -202,12 +201,8 @@ internal class RTCManager : PeerConnectionEvents {
         }
 
         this.localRenderer = renderer
-        if (publishRenderParams == null) {
-            publishRenderParams = WXRTCRenderParams()
-        }
-        publishRenderParams?.let {
-            setLocalRenderParams(it)
-        }
+
+        setLocalRenderParams(publishRenderParams)
     }
 
     fun startLocalVideo(frontCamera: Boolean, renderer: SurfaceViewRenderer?) {
@@ -558,6 +553,7 @@ internal class RTCManager : PeerConnectionEvents {
 
     fun stopPull(userId: String) {
         getPeerConnectionManagerByUserId(userId)?.let { pcm ->
+            pcm.needReconnect = false
             pcm.client?.let { client ->
                 stopPull(client)
                 pcm.client = null
@@ -575,6 +571,7 @@ internal class RTCManager : PeerConnectionEvents {
 
         for (pcm in pcManagers) {
             pcm.videoSink?.release()
+            pcm.needReconnect = false
             pcm.client?.let { client ->
                 client.isNeedReconnect = false
                 client.close()
@@ -656,6 +653,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun switchPublishCamera(frontCamera: Boolean) {
         if (useFrontCamera != frontCamera) {
             publishPCClient?.switchCamera()
+            setLocalRenderParams(publishRenderParams)
         }
         useFrontCamera = frontCamera
     }

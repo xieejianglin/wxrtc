@@ -5,7 +5,6 @@ import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
-import com.wx.rtc.rtc.RTCManager.Companion
 import com.wx.rtc.utils.RTCUtils
 import com.wx.rtc.utils.RTCUtils.getVideoResolution
 import kotlinx.coroutines.CoroutineScope
@@ -844,6 +843,11 @@ internal class PeerConnectionClient(
                     }
                 }
             })
+        } ?: let {
+            CoroutineScope(Dispatchers.IO).launch {
+                delay(1000L)
+                deletePublish(successBlock, failureBlock)
+            }
         }
     }
 
@@ -1136,7 +1140,7 @@ internal class PeerConnectionClient(
         audioSource = factory!!.createAudioSource(audioConstraints)
         localAudioTrack = factory!!.createAudioTrack(AUDIO_TRACK_ID, audioSource)
         //        localAudioTrack.setEnabled(false);
-        audioDeviceModule!!.pauseRecord()
+//        audioDeviceModule!!.pauseRecord()
         return localAudioTrack
     }
 

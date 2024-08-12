@@ -1,26 +1,32 @@
 package com.wx.rtc.test.activity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.wx.rtc.WXRTC;
 import com.wx.rtc.WXRTCDef;
 import com.wx.rtc.WXRTCListener;
-import com.wx.rtc.bean.ResultData;
 import com.wx.rtc.test.R;
 
 import org.webrtc.SurfaceViewRenderer;
 
 public class Main2Activity extends AppCompatActivity implements WXRTCListener {
 
+    private Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     private WXRTC mWXRTC;
     private String mUserId = "123456789";
 
     private SurfaceViewRenderer localVideo;
+
+    private SurfaceViewRenderer remoteVideo;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -30,6 +36,7 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
         setContentView(R.layout.activity_main);
 
         localVideo = findViewById(R.id.localVideo);
+        remoteVideo = findViewById(R.id.remoteVideo);
 
         mWXRTC = WXRTC.getInstance();
         mWXRTC.init(this);
@@ -53,14 +60,30 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
     }
 
     @Override
+    public void onBackPressed() {
+        mWXRTC.stopLocalVideo();
+        mWXRTC.stopLocalAudio();
+        mWXRTC.endProcess();
+        mWXRTC.exitRoom();
+        mWXRTC.logout();
+        super.onBackPressed();
+    }
+
+    @Override
     public void onLogin() {
         mWXRTC.enterRoom("123456");
     }
 
     @Override
     public void onEnterRoom() {
-        mWXRTC.startLocalVideo(false, localVideo);
+        mWXRTC.startLocalVideo(false, remoteVideo);
         mWXRTC.startLocalAudio();
+
+        mWXRTC.startProcess();
+
+        WXRTCDef.Speaker speaker = WXRTC.getSpeaker(10000L, "测试");
+        speaker.spkId = 1000L;
+        speaker.spkName = "测试2";
     }
 
     @Override
@@ -80,7 +103,8 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
 
     @Override
     public void onRemoteUserEnterRoom(@NonNull String userId) {
-
+        WXRTCDef.RoomMemberEntity<String> member = new WXRTCDef.RoomMemberEntity<>();
+        member.setUserId(userId);
     }
 
     @Override
@@ -94,8 +118,31 @@ public class Main2Activity extends AppCompatActivity implements WXRTCListener {
     }
 
     @Override
-    public void onResult(@NonNull ResultData resultData) {
+    public void onProcessResult(@NonNull WXRTCDef.ProcessData processData) {
+        Toast.makeText(this, "收到处理消息:"+gson.toJson(processData), Toast.LENGTH_SHORT).show();
+        if (processData.rst != null) {
+            switch (processData.rst) {
+                case WXRTCDef.WXRTC_PROCESS_DATA_RST_NO_RESULT:
+                {
+                    Log.d("", "收到处理消息:没有关心的物体");
+                    break;
+                }
+                case WXRTCDef.WXRTC_PROCESS_DATA_RST_DROP:
+                {
+                    Log.d("", "收到处理消息:水滴滴速:"+processData.getDrop_speed());
+                    break;
+                }
+                case WXRTCDef.WXRTC_PROCESS_DATA_RST_THERMOMETER:
+                {
+                    Log.d("", "收到处理消息:温度计:"+processData.getScale());
+                    break;
+                }
+                default:
+                {
 
+                }
+            }
+        }
     }
 
     @Override

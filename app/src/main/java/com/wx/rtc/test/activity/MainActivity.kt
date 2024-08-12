@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -16,15 +17,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.blankj.utilcode.util.ConvertUtils
-import com.blankj.utilcode.util.GsonUtils
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
 import com.wx.rtc.WXRTCDef
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCListener
 import com.wx.rtc.WXRTCSnapshotListener
-import com.wx.rtc.bean.ResultData
 import com.wx.rtc.test.R
 import org.webrtc.SurfaceViewRenderer
 import java.io.File
@@ -190,12 +188,17 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         })
     }
 
-
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onBackPressed() {
+        mWXRTC.stopLocalVideo()
+        mWXRTC.stopLocalAudio()
         mWXRTC.endProcess()
         mWXRTC.exitRoom()
         mWXRTC.logout()
+        super.onBackPressed()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
     override fun onError(errCode: Int, errMsg: String) {
@@ -220,6 +223,11 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.startLocalAudio()
 
         mWXRTC.startProcess()
+
+
+        val speaker = WXRTC.getSpeaker(10000L, "测试")
+        speaker.spkId = 1000L
+        speaker.spkName = "测试2"
     }
 
     override fun onExitRoom(reason: Int) {
@@ -233,6 +241,9 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
         localVideoInLocalView = true
         mWXRTC.updateLocalVideo(localVideoView)
+
+        val member = WXRTCDef.RoomMemberEntity<String>()
+        member.userId = userId
     }
 
     override fun onRemoteUserLeaveRoom(userId: String, reason: Int) {
@@ -246,8 +257,37 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
             .show()
     }
 
-    override fun onResult(resultData: ResultData) {
-        Toast.makeText(this, "收到处理消息${gson.toJson(resultData)}", Toast.LENGTH_SHORT).show()
+    override fun onProcessResult(processData: WXRTCDef.ProcessData) {
+        Toast.makeText(this, "收到处理消息:${gson.toJson(processData)}", Toast.LENGTH_SHORT).show()
+        when (processData.rst) {
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_NO_RESULT -> {
+                Log.d("", "收到处理消息:没有关心的物体")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_DROP -> {
+                Log.d("", "收到处理消息:水滴滴速:${processData.drop_speed}")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_THERMOMETER -> {
+                Log.d("", "收到处理消息:温度计:${processData.scale}")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_BARCODE -> {
+                Log.d("", "收到处理消息:条码:${processData.barcodeDate}")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_QRCODE -> {
+                Log.d("", "收到处理消息:二维码:${processData.barcodeDate}")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_SPHYGMOMANOMETER -> {
+                Log.d("", "收到处理消息:血压仪:${processData.low_pressure}/${processData.high_pressure}")
+            }
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_SPINAL_PUNCTURE -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_AROPTP -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_FACE -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_SPEECH_RECOGNITION -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_GESTURE_RECOGNITION -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_OXIMETER -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_WEIGHT_SCALE -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_ECG_MONITOR -> {}
+            else -> {}
+        }
     }
 
     override fun onRecordStart(fileName: String) {

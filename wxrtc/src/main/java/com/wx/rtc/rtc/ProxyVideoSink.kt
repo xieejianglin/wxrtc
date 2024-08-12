@@ -7,9 +7,8 @@ import org.webrtc.VideoSink
 internal class ProxyVideoSink : VideoSink {
     var streamId: String? = null
 
-    @JvmField
-    @set:Synchronized
     var target: VideoSink? = null
+        private set
 
     var frame: VideoFrame? = null
         private set
@@ -32,7 +31,7 @@ internal class ProxyVideoSink : VideoSink {
     @Synchronized
     fun release() {
         if (target != null && target is SurfaceViewRenderer) {
-            if (!(target as SurfaceViewRenderer).released()) {
+            if (!(target as SurfaceViewRenderer).isReleased) {
                 (target as SurfaceViewRenderer).release()
             }
         }

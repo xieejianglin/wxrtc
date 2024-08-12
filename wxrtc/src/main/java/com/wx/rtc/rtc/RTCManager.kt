@@ -50,6 +50,7 @@ internal class RTCManager : PeerConnectionEvents {
     private var publishPCClient: PeerConnectionClient? = null
     private val callStartedTimeMs: Long = 0
     private var webRTCReconnectNum = 0
+    private var publishUserId: String? = null
     private var publishUrl: String? = null
     private var unpublishUrl: String? = null
     private var useFrontCamera = false
@@ -93,6 +94,7 @@ internal class RTCManager : PeerConnectionEvents {
             return
         }
         this.publishUrl = publishUrl
+        this.publishUserId = userId
         mStartPublish = true
 
         publishPCClient = PeerConnectionClient(
@@ -160,7 +162,7 @@ internal class RTCManager : PeerConnectionEvents {
 
             if (pcm.videoRecvEnabled) {
                 pcm.videoSink?.let {
-                    startRemoteVideo(userId, pcm.videoSink?.target as SurfaceViewRenderer)
+                    startRemoteVideo(userId, it.target as SurfaceViewRenderer)
                 }
             }
             if (pcm.videoRecvMute) {
@@ -184,20 +186,17 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     private fun setLocalRenderer(renderer: SurfaceViewRenderer?) {
-        localProxyVideoSink.target = renderer
+        localProxyVideoSink.setTarget(publishUserId, renderer)
 
-        if (this.localRenderer != null && (renderer != null) && (this.localRenderer === renderer)) {
+        if (this.localRenderer != null && renderer != null && this.localRenderer === renderer) {
             return
         }
 
-        localRenderer?.release()
-        localRenderer = null
-
-        renderer?.let {
-            it.release()
-            it.init(eglBase.eglBaseContext, null)
-            //            it.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-            it.setEnableHardwareScaler(false /* enabled */)
+        renderer?.apply {
+            if (!isInited || isReleased) {
+                init(eglBase.eglBaseContext, null)
+                setEnableHardwareScaler(false /* enabled */)
+            }
         }
 
         this.localRenderer = renderer
@@ -239,34 +238,26 @@ internal class RTCManager : PeerConnectionEvents {
                 return
             }
 
-            renderer?.let {
-                it.release()
-                it.init(eglBase.eglBaseContext, null)
-                //            it.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-                it.setEnableHardwareScaler(false /* enabled */)
-            }
-
-            if (pcm.videoSink != null) {
-                if (pcm.videoSink!!.target !== localRenderer) {
-                    pcm.videoSink!!.release()
+            renderer?.apply {
+                if (!isInited || isReleased) {
+                    init(eglBase.eglBaseContext, null)
+                    setEnableHardwareScaler(false /* enabled */)
                 }
-
-                pcm.videoSink!!.target = renderer
-            } else {
-                val remoteVideoSink = ProxyVideoSink()
-                remoteVideoSink.setTarget(userId, renderer)
-
-                pcm.videoSink = remoteVideoSink
             }
+
+            if (pcm.videoSink == null) {
+                pcm.videoSink = ProxyVideoSink()
+            }
+            pcm.videoSink!!.setTarget(userId, renderer)
         } else {
             pcm = PeerConnectionManager()
             pcm.userId = userId
 
-            renderer?.let {
-                it.release()
-                it.init(eglBase.eglBaseContext, null)
-                //            it.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL);
-                it.setEnableHardwareScaler(false /* enabled */)
+            renderer?.apply {
+                if (!isInited || isReleased) {
+                    init(eglBase.eglBaseContext, null)
+                    setEnableHardwareScaler(false /* enabled */)
+                }
             }
 
             val remoteVideoSink = ProxyVideoSink()
@@ -282,6 +273,11 @@ internal class RTCManager : PeerConnectionEvents {
         if (pcm.renderParams == null) {
             pcm.renderParams = WXRTCRenderParams()
         }
+
+        if (!pcm.videoRecvMute) {
+            pcm.client?.setRemoteVideoTrackEnabled(true)
+        }
+
         renderer?.let {
             setRendererRenderParams(false, it, pcm.renderParams!!)
         }
@@ -290,6 +286,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun stopRemoteVideo(userId: String) {
         getPeerConnectionManagerByUserId(userId)?.let { pcm ->
             pcm.videoRecvEnabled = false
+            pcm.client?.setRemoteVideoTrackEnabled(false)
             pcm.videoSink?.release()
         }
     }
@@ -297,6 +294,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun stopAllRemoteVideo() {
         for (pcm in pcManagers) {
             pcm.videoRecvEnabled = false
+            pcm.client?.setRemoteVideoTrackEnabled(false)
             pcm.videoSink?.release()
         }
     }
@@ -544,6 +542,8 @@ internal class RTCManager : PeerConnectionEvents {
         stopLocalVideo()
         stopLocalAudio()
 
+        localProxyVideoSink.release()
+
         mStartPublish = false
         publishPCClient?.let { client ->
             client.isNeedReconnect = false
@@ -556,6 +556,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun stopPull(userId: String) {
         getPeerConnectionManagerByUserId(userId)?.let { pcm ->
             pcm.needReconnect = false
+            pcm.videoSink?.release()
             pcm.client?.let { client ->
                 stopPull(client)
                 pcm.client = null

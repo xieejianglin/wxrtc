@@ -29,6 +29,8 @@ public class SurfaceViewRenderer extends SurfaceView implements SurfaceHolder.Ca
   
   private int surfaceHeight;
 
+  private boolean inited;
+
   private boolean released;
   
   public SurfaceViewRenderer(Context context) {
@@ -57,10 +59,13 @@ public class SurfaceViewRenderer extends SurfaceView implements SurfaceHolder.Ca
     this.rotatedFrameWidth = 0;
     this.rotatedFrameHeight = 0;
     this.eglRenderer.init(sharedContext, this, configAttributes, drawer);
+    this.inited = true;
     this.released = false;
   }
 
-  public boolean released() {
+  public boolean isInited() { return inited; }
+
+  public boolean isReleased() {
     return this.released;
   }
   

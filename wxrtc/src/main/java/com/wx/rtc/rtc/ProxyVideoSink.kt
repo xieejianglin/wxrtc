@@ -31,8 +31,9 @@ internal class ProxyVideoSink : VideoSink {
     @Synchronized
     fun release() {
         if (target != null && target is SurfaceViewRenderer) {
-            if (!(target as SurfaceViewRenderer).isReleased) {
-                (target as SurfaceViewRenderer).release()
+            val renderer = target as SurfaceViewRenderer
+            if (!renderer.isReleased) {
+                renderer.release()
             }
         }
         target = null

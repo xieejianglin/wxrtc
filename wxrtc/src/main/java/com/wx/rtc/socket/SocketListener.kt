@@ -1,6 +1,6 @@
 package com.wx.rtc.socket
 
-import com.wx.rtc.bean.ResultData
+import com.wx.rtc.WXRTCDef
 
 internal interface SocketListener {
     fun onError(errCode: Int, errMsg: String)
@@ -14,7 +14,7 @@ internal interface SocketListener {
     fun onRemoteUserLeaveRoom(userId: String, reason: Int)
     fun onRecvRoomMsg(userId: String, cmd: String, message: String)
     fun onRecvCallMsg(userId: String, cmd: String, roomId: String)
-    fun onResult(resultData: ResultData)
+    fun onResult(processData: WXRTCDef.ProcessData)
 
     fun onRecordStart(fileName: String)
     fun onRecordEnd(fileName: String)

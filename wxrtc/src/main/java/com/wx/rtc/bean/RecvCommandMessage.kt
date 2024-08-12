@@ -1,6 +1,7 @@
 package com.wx.rtc.bean
 
 import com.google.gson.annotations.SerializedName
+import com.wx.rtc.WXRTCDef
 
 internal class RecvCommandMessage {
     @JvmField
@@ -45,5 +46,5 @@ internal class RecvCommandMessage {
 
     @JvmField
     @SerializedName("result")
-    var result: ResultData? = null
+    var result: WXRTCDef.ProcessData? = null
 }

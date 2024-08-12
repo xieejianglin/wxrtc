@@ -1,6 +1,7 @@
 package com.wx.rtc.bean
 
 import com.google.gson.annotations.SerializedName
+import com.wx.rtc.WXRTCDef
 
 internal class SendCommandMessage {
     @JvmField
@@ -59,7 +60,7 @@ internal class SendCommandMessage {
         var hospitalId: String? = null
 
         @SerializedName("spk_list")
-        var spkList: List<SpeakerDTO>? = null
+        var spkList: List<WXRTCDef.Speaker>? = null
     }
 
 
@@ -77,7 +78,7 @@ internal class SendCommandMessage {
         var hospitalId: String? = null
 
         @SerializedName("spk_list")
-        var spkList: List<SpeakerDTO>? = null
+        var spkList: List<WXRTCDef.Speaker>? = null
     }
 
     class CallCmdDTO {

@@ -1,5 +1,8 @@
 package com.wx.rtc
 
+import com.google.gson.annotations.SerializedName
+import org.webrtc.SurfaceViewRenderer
+
 /**
  * @author Administrator
  */
@@ -66,6 +69,73 @@ class WXRTCDef {
         const val WXRTC_VIDEO_MIRROR_TYPE_ENABLE: Int = 1
 
         const val WXRTC_VIDEO_MIRROR_TYPE_DISABLE: Int = 2
+
+        const val WXRTC_PROCESS_DATA_RST_NO_RESULT: Int = 0
+
+        /**
+         * 气囊水滴
+         */
+        const val WXRTC_PROCESS_DATA_RST_DROP: Int = 1
+
+        /**
+         * 温度计
+         */
+        const val WXRTC_PROCESS_DATA_RST_THERMOMETER: Int = 2
+
+        /**
+         * 条形码
+         */
+        const val WXRTC_PROCESS_DATA_RST_BARCODE: Int = 3
+
+        /**
+         * 二维码
+         */
+        const val WXRTC_PROCESS_DATA_RST_QRCODE: Int = 4
+
+        /**
+         * 血压仪
+         */
+        const val WXRTC_PROCESS_DATA_RST_SPHYGMOMANOMETER: Int = 5
+
+        /**
+         * 腰椎穿刺
+         */
+        const val WXRTC_PROCESS_DATA_RST_SPINAL_PUNCTURE: Int = 6
+
+        /**
+         * 眼科
+         */
+        const val WXRTC_PROCESS_DATA_RST_AROPTP: Int = 7
+
+        /**
+         * 人脸
+         */
+        const val WXRTC_PROCESS_DATA_RST_FACE: Int = 8
+
+        /**
+         * 语音识别
+         */
+        const val WXRTC_PROCESS_DATA_RST_SPEECH_RECOGNITION: Int = 9
+
+        /**
+         * 手势识别
+         */
+        const val WXRTC_PROCESS_DATA_RST_GESTURE_RECOGNITION: Int = 10
+
+        /**
+         * 血氧仪
+         */
+        const val WXRTC_PROCESS_DATA_RST_OXIMETER: Int = 11
+
+        /**
+         * 体重秤
+         */
+        const val WXRTC_PROCESS_DATA_RST_WEIGHT_SCALE: Int = 12
+
+        /**
+         * 心电监护仪
+         */
+        const val WXRTC_PROCESS_DATA_RST_ECG_MONITOR: Int = 13
     }
 
     /**
@@ -123,27 +193,7 @@ class WXRTCDef {
 
         @JvmField
         var videoMaxBitrate: Int = 2500,
-    ){
-        fun setVideoResolution(videoResolution: Int){
-            this.videoResolution = videoResolution
-        }
-
-        fun setVideoResolutionMode(videoResolutionMode: Int){
-            this.videoResolutionMode = videoResolutionMode
-        }
-
-        fun setVideoFps(videoFps: Int){
-            this.videoFps = videoFps
-        }
-
-        fun setVideoMinBitrate(videoMinBitrate: Int){
-            this.videoMinBitrate = videoMinBitrate
-        }
-
-        fun setVideoMaxBitrate(videoMaxBitrate: Int){
-            this.videoMaxBitrate = videoMaxBitrate
-        }
-    }
+    )
 
     class WXRTCRenderParams(
         @JvmField
@@ -154,17 +204,77 @@ class WXRTCDef {
 
         @JvmField
         var mirrorType: Int = WXRTC_VIDEO_MIRROR_TYPE_AUTO,
-    ) {
-        fun setRotation(rotation: Int){
-            this.rotation = rotation
-        }
+    )
 
-        fun setFillMode(fillMode: Int){
-            this.fillMode = fillMode
-        }
+    class Speaker {
+        @JvmField
+        @SerializedName("spk_id")
+        var spkId: Long? = null
 
-        fun setMirrorType(mirrorType: Int){
-            this.mirrorType = mirrorType
-        }
+        @JvmField
+        @SerializedName("spk_name")
+        var spkName: String? = null
+    }
+
+    class ProcessData {
+        @JvmField
+        var rst: Int? = null //0 没有关心的物体  1 气囊 2 温度计 3条形码 4二维码 5血压仪 6腰椎穿刺 7眼科标记 8人脸 9语音识别
+        var need_focus: Int? = null //1表示需要聚焦，0表示不需要聚焦
+        var focus_point: List<Float>? = null //聚焦位置
+        var drop_speed: String? = null //滴速,单位 滴/秒
+        var scale: String? = null //体温度数
+        var need_magnify: Int? = null // 0表示不需要放大,1表示需要放大
+        var barcodeDate: String? = null // 二维码 条形码 内容
+        var high_pressure: String? = null // 血压高压
+        var low_pressure: String? = null // 血压低压
+        var pulse: String? = null // 脉搏
+        var has_csf: Int? = null //1表示有液体流出，0表示没有液体流出
+        var right_eye: EyeMark? = null //
+        var left_eye: EyeMark? = null //
+        var pid: String? = null // 人脸患者id
+        var asr_result: String? = null //语音识别结果
+        var gesture: Int? = null //手势识别结果
+        var oxygen_saturation: String? = null //血氧含量
+        var weight_scale: String? = null //体重
+        var respiratory_rate: String? = null //呼吸率
+        var capture_image_url: String? = null //识别出来的截图
+    }
+
+    class EyeMark {
+        /**
+         * normal : 0
+         * femtosecond : 0
+         * astigmatism : 0
+         */
+        //普通：0为无，1为有
+        var normal: Int = 0
+
+        //飞秒：0为无，1为有
+        var femtosecond: Int = 0
+
+        //散光：0为无，1为有
+        var astigmatism: Int = 0
+    }
+
+    class RoomMemberEntity<T> {
+        var userId: String? = null
+        var userName: String? = null
+        var userAvatar: String? = null
+        var audioVolume: Int = 0
+
+        // 用户是否打开了视频
+        var isVideoAvailable: Boolean = false
+
+        // 用户是否打开音频
+        var isAudioAvailable: Boolean = false
+
+        // 是否对用户静画
+        var isMuteVideo: Boolean = false
+
+        // 是否对用户静音
+        var isMuteAudio: Boolean = false
+        var videoView: SurfaceViewRenderer? = null
+
+        var customData: T? = null
     }
 }

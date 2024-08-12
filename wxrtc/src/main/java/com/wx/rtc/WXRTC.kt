@@ -1,7 +1,6 @@
 package com.wx.rtc
 
 import android.content.Context
-import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.text.TextUtils
 import android.util.Log
@@ -11,17 +10,16 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTCDef.WXRTCRenderParams
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
+import com.wx.rtc.WXRTCDef.Speaker
 import com.wx.rtc.bean.CallCommand
 import com.wx.rtc.bean.ProcessCommand
 import com.wx.rtc.bean.RecordCommand
-import com.wx.rtc.bean.ResultData
 import com.wx.rtc.bean.RoomMsg
 import com.wx.rtc.bean.SendCommandMessage
 import com.wx.rtc.bean.SendCommandMessage.CallCmdDTO
 import com.wx.rtc.bean.SendCommandMessage.ProcessCmdListDTO
 import com.wx.rtc.bean.SendCommandMessage.RecordCmdDTO
 import com.wx.rtc.bean.SignalCommand
-import com.wx.rtc.bean.SpeakerDTO
 import com.wx.rtc.rtc.RTCListener
 import com.wx.rtc.rtc.RTCManager
 import com.wx.rtc.socket.SocketListener
@@ -258,7 +256,7 @@ class WXRTC : SocketListener, RTCListener {
         extraData: String?,
         needAfterAsr: Boolean,
         hospitalId: String?,
-        spkList: List<SpeakerDTO>?
+        spkList: List<Speaker>?
     ): RecordCmdDTO {
         val dto = RecordCmdDTO()
         dto.cmd = cmd
@@ -278,7 +276,7 @@ class WXRTC : SocketListener, RTCListener {
         extraData: String? = null,
         needAfterAsr: Boolean = false,
         hospitalId: String? = null,
-        spkList: List<SpeakerDTO>? = null
+        spkList: List<Speaker>? = null
     ) {
         val message = SendCommandMessage()
         message.signal = SignalCommand.RECORD_CMD
@@ -301,7 +299,7 @@ class WXRTC : SocketListener, RTCListener {
         extraData: String? = null,
         needAfterAsr: Boolean = false,
         hospitalId: String? = null,
-        spkList: List<SpeakerDTO>? = null
+        spkList: List<Speaker>? = null
     ) {
         val message = SendCommandMessage()
         message.signal = SignalCommand.RECORD_CMD
@@ -329,7 +327,7 @@ class WXRTC : SocketListener, RTCListener {
         mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
-    fun startAsr(hospitalId: String?, spkList: List<SpeakerDTO>?) {
+    fun startAsr(hospitalId: String?, spkList: List<Speaker>?) {
         val message = SendCommandMessage()
         message.signal = SignalCommand.PROCESS_CMD
 
@@ -346,7 +344,7 @@ class WXRTC : SocketListener, RTCListener {
         mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
-    fun endAndStartAsr(hospitalId: String?, spkList: List<SpeakerDTO>?) {
+    fun endAndStartAsr(hospitalId: String?, spkList: List<Speaker>?) {
         val message = SendCommandMessage()
         message.signal = SignalCommand.PROCESS_CMD
 
@@ -654,8 +652,8 @@ class WXRTC : SocketListener, RTCListener {
         }
     }
 
-    override fun onResult(resultData: ResultData) {
-        mRTCListener?.onResult(resultData)
+    override fun onResult(processData: WXRTCDef.ProcessData) {
+        mRTCListener?.onProcessResult(processData)
     }
 
     override fun onRecordStart(fileName: String) {
@@ -698,8 +696,8 @@ class WXRTC : SocketListener, RTCListener {
         }
 
         @JvmStatic
-        fun getSpeaker(userId: Long, userName: String): SpeakerDTO {
-            val speaker = SpeakerDTO()
+        fun getSpeaker(userId: Long, userName: String): Speaker {
+            val speaker = Speaker()
             speaker.spkId = userId
             speaker.spkName = userName
             return speaker

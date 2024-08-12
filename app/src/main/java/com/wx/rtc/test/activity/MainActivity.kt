@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         ) {
             ActivityCompat.requestPermissions(this, PERMISSIONS, REQUEST_CODE)
         } else {
-            if (!mWXRTC.isEnterRoom) {
+            if (mWXRTC.isLogin && !mWXRTC.isEnterRoom) {
                 enterRoom()
             }
         }
@@ -171,7 +171,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
                 return
             }
         }
-        if (!mWXRTC.isEnterRoom) {
+        if (mWXRTC.isLogin && !mWXRTC.isEnterRoom) {
             enterRoom()
         }
     }
@@ -204,7 +204,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onLogin() {
         Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show()
-        if (!mWXRTC.isEnterRoom) {
+        if (mWXRTC.isLogin && !mWXRTC.isEnterRoom) {
             enterRoom()
         }
     }
@@ -230,6 +230,9 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         Toast.makeText(this, userId + "进入房间", Toast.LENGTH_SHORT).show()
         remoteUserId = userId
         mWXRTC.startRemoteVideo(userId, remoteVideoView)
+
+        localVideoInLocalView = true
+        mWXRTC.updateLocalVideo(localVideoView)
     }
 
     override fun onRemoteUserLeaveRoom(userId: String, reason: Int) {

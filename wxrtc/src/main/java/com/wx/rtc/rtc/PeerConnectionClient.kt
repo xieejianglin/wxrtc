@@ -714,6 +714,8 @@ internal class PeerConnectionClient(
         surfaceTextureHelper?.dispose()
         surfaceTextureHelper = null
         localRender = null
+        localVideoTrack?.dispose()
+        localVideoTrack = null
 //        remoteSink = null
         Log.d(TAG, "Closing peer connection factory.")
         factory?.dispose()
@@ -865,6 +867,7 @@ internal class PeerConnectionClient(
 
     fun setLocalVideoTrackEnabled(enable: Boolean) {
         executor.execute {
+            Log.d(TAG, "${localVideoTrack?:"null"} setLocalVideoTrackEnabled $enable")
             localVideoTrack?.setEnabled(enable)
         }
     }

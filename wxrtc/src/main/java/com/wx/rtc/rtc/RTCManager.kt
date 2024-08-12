@@ -89,7 +89,7 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     fun startPublish(publishUrl: String, userId: String) {
-        if (mStartPublish) {
+        if (mStartPublish && publishPCClient != null) {
             return
         }
         this.publishUrl = publishUrl
@@ -548,6 +548,8 @@ internal class RTCManager : PeerConnectionEvents {
         publishPCClient?.let { client ->
             client.isNeedReconnect = false
             client.close()
+
+            publishPCClient = null
         }
     }
 

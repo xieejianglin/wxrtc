@@ -105,8 +105,8 @@ internal class RTCManager : PeerConnectionEvents {
             options.networkIgnoreMask = 0
             //        options.disableEncryption = true;
 //        options.disableNetworkMonitor = true;
-            this.setLocalVideoTrackEnabled(publishVideoSendEnabled)
-            this.setLocalAudioTrackEnabled(publishAudioSendEnabled)
+//            this.setLocalVideoTrackEnabled(publishVideoSendEnabled)
+//            this.setLocalAudioTrackEnabled(publishAudioSendEnabled)
             this.setRemoteVideoTrackEnabled(false)
             this.createPeerConnectionFactory(options)
 
@@ -533,8 +533,8 @@ internal class RTCManager : PeerConnectionEvents {
             options.networkIgnoreMask = 0
             //        options.disableEncryption = true;
 //        options.disableNetworkMonitor = true;
-            this.setLocalVideoTrackEnabled(false)
-            this.setLocalAudioTrackEnabled(false)
+//            this.setLocalVideoTrackEnabled(false)
+//            this.setLocalAudioTrackEnabled(false)
             this.createPeerConnectionFactory(options)
         }
     }

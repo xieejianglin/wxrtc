@@ -103,12 +103,6 @@ class WXRTC : SocketListener, RTCListener {
     }
 
     fun enterRoom(roomId: String) {
-        if (!isLogin) {
-            mRTCListener?.onError(1, "请先登录")
-            mCallListener?.onError(1, "请先登录")
-            return
-        }
-
         val message = SendCommandMessage()
         message.signal = SignalCommand.ENTER_ROOM
         message.roomId = roomId

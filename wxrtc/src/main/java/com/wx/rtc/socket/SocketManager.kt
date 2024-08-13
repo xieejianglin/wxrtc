@@ -232,8 +232,8 @@ internal class SocketManager {
                             }
                         }
 
-                        message.result?.let {
-                            mListener?.onResult(it)
+                        if (message.result != null && message.result!!.rst != null) {
+                            mListener?.onResult(message.result!!)
                         }
                     } else {
                         mListener?.onError(message.code, message.message?:"")

@@ -21,4 +21,4 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class org.webrtc.** { *; }
-#-keep class com.wx.rtc.**{*;}
+-keep class com.wx.rtc.**{*;}

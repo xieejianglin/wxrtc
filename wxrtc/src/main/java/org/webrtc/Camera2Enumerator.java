@@ -47,12 +47,12 @@ public class Camera2Enumerator implements CameraEnumerator {
 
   public boolean isFrontFacing(String deviceName) {
     CameraCharacteristics characteristics = this.getCameraCharacteristics(deviceName);
-    return characteristics != null && (Integer)characteristics.get(CameraCharacteristics.LENS_FACING) == 0;
+    return characteristics != null && characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics .LENS_FACING_FRONT;
   }
 
   public boolean isBackFacing(String deviceName) {
     CameraCharacteristics characteristics = this.getCameraCharacteristics(deviceName);
-    return characteristics != null && (Integer)characteristics.get(CameraCharacteristics.LENS_FACING) == 1;
+    return characteristics != null && characteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics .LENS_FACING_BACK;
   }
 
   @Nullable

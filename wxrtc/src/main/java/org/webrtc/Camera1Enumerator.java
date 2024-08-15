@@ -36,12 +36,12 @@ public class Camera1Enumerator implements CameraEnumerator {
   
   public boolean isFrontFacing(String deviceName) {
     Camera.CameraInfo info = getCameraInfo(getCameraIndex(deviceName));
-    return (info != null && info.facing == 1);
+    return (info != null && info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT);
   }
   
   public boolean isBackFacing(String deviceName) {
     Camera.CameraInfo info = getCameraInfo(getCameraIndex(deviceName));
-    return (info != null && info.facing == 0);
+    return (info != null && info.facing == Camera.CameraInfo.CAMERA_FACING_BACK);
   }
   
   public List<CameraEnumerationAndroid.CaptureFormat> getSupportedFormats(String deviceName) {

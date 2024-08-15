@@ -158,8 +158,7 @@ internal class PeerConnectionClient(
     private var remoteAudioVolume = 100
     private var callStartedTimeMs: Long = 0
 
-//    private var camera1Capturer: Camera1Capturer? = null
-//    private var camera2Capturer: Camera2Capturer? = null
+    private var cameraEnumerator: CameraEnumerator? = null
     private var cameraVideoCapturer: CameraVideoCapturer? = null
 
     var isNeedReconnect: Boolean = true
@@ -364,6 +363,7 @@ internal class PeerConnectionClient(
         if (targetDeviceName.isNotEmpty()) {
             return enumerator.createCapturer(targetDeviceName, null).let { videoCapturer ->
                 cameraVideoCapturer = videoCapturer
+                cameraEnumerator = enumerator
                 videoCapturer
             }
         }

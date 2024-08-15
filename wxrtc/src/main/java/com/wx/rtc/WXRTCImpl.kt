@@ -460,6 +460,9 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         audioManager.isSpeakerphoneOn = speakerOn
     }
 
+    override val isFrontCamera: Boolean
+        get() = mRTCManager.isFrontCamera
+
     override fun switchCamera(frontCamera: Boolean) {
         mRTCManager.switchPublishCamera(frontCamera)
     }

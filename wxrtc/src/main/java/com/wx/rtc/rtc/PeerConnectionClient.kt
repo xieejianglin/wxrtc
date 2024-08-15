@@ -158,6 +158,7 @@ internal class PeerConnectionClient(
     private var remoteAudioVolume = 100
     private var callStartedTimeMs: Long = 0
 
+    private var cameraDeviceName: String? = null
     private var cameraEnumerator: CameraEnumerator? = null
     private var cameraVideoCapturer: CameraVideoCapturer? = null
 
@@ -899,6 +900,13 @@ internal class PeerConnectionClient(
             track?.setVolume(volume.toDouble())
         }
     }
+
+    val isFrontCamera: Boolean
+        get() {
+            return cameraEnumerator?.let {
+                it.isFrontFacing(cameraDeviceName)
+            } ?: false
+        }
 
     val isCameraZoomSupported: Boolean
         get() {

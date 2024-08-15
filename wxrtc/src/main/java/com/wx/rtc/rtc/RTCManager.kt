@@ -424,6 +424,14 @@ internal class RTCManager : PeerConnectionEvents {
         }
     }
 
+    val isFrontCamera: Boolean
+        get() {
+            if (publishPCClient != null) {
+                return publishPCClient!!.isFrontCamera
+            }
+            return false
+        }
+
     val isCameraZoomSupported: Boolean
         get() {
             if (publishPCClient != null) {
@@ -655,10 +663,10 @@ internal class RTCManager : PeerConnectionEvents {
 
     fun switchPublishCamera(frontCamera: Boolean) {
         if (useFrontCamera != frontCamera) {
+            useFrontCamera = frontCamera
             publishPCClient?.switchCamera()
             setLocalRenderParams(publishRenderParams)
         }
-        useFrontCamera = frontCamera
     }
 
     private fun getPeerConnectionManagerByUserId(userId: String): PeerConnectionManager? {

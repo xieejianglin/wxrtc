@@ -203,6 +203,9 @@ abstract class WXRTC {
 
     abstract fun setSpeakerOn(speakerOn: Boolean);
 
+    abstract val isFrontCamera: Boolean
+        get
+
     abstract fun switchCamera(frontCamera: Boolean);
 
     abstract val isCameraZoomSupported: Boolean

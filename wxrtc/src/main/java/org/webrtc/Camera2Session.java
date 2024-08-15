@@ -124,6 +124,7 @@ class Camera2Session implements CameraSession {
       Camera2Session.this.surface = new Surface(Camera2Session.this.surfaceTextureHelper.getSurfaceTexture());
       try {
         camera.createCaptureSession(Arrays.asList(Camera2Session.this.surface), Camera2Session.this.new CaptureSessionCallback(), Camera2Session.this.cameraThreadHandler);
+        Camera2Session.this.events.onCameraOpening();
       } catch (CameraAccessException e) {
         Camera2Session.this.reportError("Failed to create capture session. " + e);
         return;
@@ -291,7 +292,7 @@ class Camera2Session implements CameraSession {
   private void openCamera() {
     checkIsOnCameraThread();
     Logging.d("Camera2Session", "Opening camera " + this.cameraId);
-    this.events.onCameraOpening();
+//    this.events.onCameraOpening();
     try {
       initZoomParameter();
       this.cameraManager.openCamera(this.cameraId, new CameraStateCallback(), this.cameraThreadHandler);

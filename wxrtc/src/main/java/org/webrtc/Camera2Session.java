@@ -1,6 +1,7 @@
 package org.webrtc;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
@@ -45,6 +46,8 @@ class Camera2Session implements CameraSession {
   private final int height;
   
   private final int framerate;
+
+  private CaptureRequest.Builder captureRequestBuilder;
   
   private CameraCharacteristics cameraCharacteristics;
   
@@ -74,6 +77,10 @@ class Camera2Session implements CameraSession {
   private boolean firstFrameReported;
   
   private final long constructionTimeNs;
+
+  private int mZoom;
+  private float mStepWidth; // 每次改变的宽度大小
+  private float mStepHeight; // 每次改变的高度大小
   
   private class CameraStateCallback extends CameraDevice.StateCallback {
     private String getErrorDescription(int errorCode) {
@@ -142,7 +149,7 @@ class Camera2Session implements CameraSession {
       Logging.d("Camera2Session", "Camera capture session configured.");
       Camera2Session.this.captureSession = session;
       try {
-        CaptureRequest.Builder captureRequestBuilder = Camera2Session.this.cameraDevice.createCaptureRequest(3);
+        captureRequestBuilder = Camera2Session.this.cameraDevice.createCaptureRequest(3);
         captureRequestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, new Range(
               Integer.valueOf(Camera2Session.this.captureFormat.framerate.min / Camera2Session.this.fpsUnitFactor), 
               Integer.valueOf(Camera2Session.this.captureFormat.framerate.max / Camera2Session.this.fpsUnitFactor)));
@@ -286,6 +293,7 @@ class Camera2Session implements CameraSession {
     Logging.d("Camera2Session", "Opening camera " + this.cameraId);
     this.events.onCameraOpening();
     try {
+      initZoomParameter();
       this.cameraManager.openCamera(this.cameraId, new CameraStateCallback(), this.cameraThreadHandler);
     } catch (CameraAccessException|IllegalArgumentException|SecurityException e) {
       reportError("Failed to open camera: " + e);
@@ -303,6 +311,75 @@ class Camera2Session implements CameraSession {
       int stopTimeMs = (int)TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - stopStartTime);
       camera2StopTimeMsHistogram.addSample(stopTimeMs);
     } 
+  }
+
+  @Override
+  public boolean isZoomSupported() {
+    float max_digital_zoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+    return max_digital_zoom > 0;
+  }
+
+  @Override
+  public int getMaxZoom(){
+    float max_digital_zoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+    return (int) max_digital_zoom;
+  }
+
+  @Override
+  public int getZoom(){
+    if (cameraDevice == null || cameraCharacteristics == null) {
+      return 0;
+    }
+    return mZoom;
+  }
+
+  @Override
+  public void setZoom(int zoom){
+    if (cameraDevice == null || cameraCharacteristics == null || captureRequestBuilder == null) {
+      return;
+    }
+    mZoom = zoom;
+    int maxZoom = getMaxZoom();
+    if (zoom > maxZoom) { // 放大
+      mZoom = maxZoom;
+    } else if (zoom < 0) { // 缩小
+      mZoom = 0;
+    }
+
+    Rect rect = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+    int cropW = (int) (mStepWidth * mZoom);
+    int cropH = (int) (mStepHeight * mZoom);
+    Rect zoomRect = new Rect(rect.left + cropW, rect.top + cropH, rect.right - cropW, rect.bottom - cropH);
+    Logging.d(TAG, "zoomRect: " + zoomRect);
+    captureRequestBuilder.set(CaptureRequest.SCALER_CROP_REGION, zoomRect);
+    startPreview(); // 需要重新 start preview 才能生效
+  }
+
+  private void initZoomParameter() {
+    Rect rect = cameraCharacteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+    Logging.d(TAG, "sensor_info_active_array_size: " + rect);
+    // max_digital_zoom 表示 active_rect 除以 crop_rect 的最大值
+    float max_digital_zoom = cameraCharacteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM);
+    Logging.d(TAG, "max_digital_zoom: " + max_digital_zoom);
+    // crop_rect的最小宽高
+    float minWidth = rect.width() / max_digital_zoom;
+    float minHeight = rect.height() / max_digital_zoom;
+    // 因为缩放时两边都要变化，所以要除以2
+    mStepWidth = (rect.width() - minWidth) / max_digital_zoom / 2;
+    mStepHeight = (rect.height() - minHeight) / max_digital_zoom / 2;
+  }
+
+  public void startPreview() {
+    Logging.v(TAG, "startPreview");
+    if (captureSession == null || captureRequestBuilder == null) {
+      Logging.w(TAG, "startPreview: mCaptureSession or mPreviewRequestBuilder is null");
+      return;
+    }
+    try {
+      captureSession.setRepeatingRequest(captureRequestBuilder.build(), new Camera2Session.CameraCaptureCallback(), Camera2Session.this.cameraThreadHandler);
+    } catch (CameraAccessException e) {
+      e.printStackTrace();
+    }
   }
   
   private void stopInternal() {

@@ -6,6 +6,14 @@ import android.view.WindowManager;
 
 interface CameraSession {
   void stop();
+
+  boolean isZoomSupported();
+
+  int getMaxZoom();
+
+  int getZoom();
+
+  void setZoom(int zoom);
   
   public static interface Events {
     void onCameraOpening();

@@ -50,7 +50,7 @@ class Camera1Session implements CameraSession {
     RUNNING, STOPPED;
   }
   
-  public static Camera create(CameraSession.CreateSessionCallback callback, CameraSession.Events events, boolean captureToTexture, Context applicationContext, SurfaceTextureHelper surfaceTextureHelper, String cameraName, int width, int height, int framerate) {
+  public static void create(CameraSession.CreateSessionCallback callback, CameraSession.Events events, boolean captureToTexture, Context applicationContext, SurfaceTextureHelper surfaceTextureHelper, String cameraName, int width, int height, int framerate) {
     int cameraId;
     Camera camera;
     CameraEnumerationAndroid.CaptureFormat captureFormat;
@@ -61,24 +61,24 @@ class Camera1Session implements CameraSession {
       cameraId = Camera1Enumerator.getCameraIndex(cameraName);
     } catch (IllegalArgumentException e) {
       callback.onFailure(CameraSession.FailureType.ERROR, e.getMessage());
-      return null;
+      return;
     } 
     try {
       camera = Camera.open(cameraId);
     } catch (RuntimeException e) {
       callback.onFailure(CameraSession.FailureType.ERROR, e.getMessage());
-      return null;
+      return;
     } 
     if (camera == null) {
       callback.onFailure(CameraSession.FailureType.ERROR, "Camera.open returned null for camera id = " + cameraId);
-      return null;
+      return;
     } 
     try {
       camera.setPreviewTexture(surfaceTextureHelper.getSurfaceTexture());
     } catch (IOException|RuntimeException e) {
       camera.release();
       callback.onFailure(CameraSession.FailureType.ERROR, e.getMessage());
-      return null;
+      return;
     } 
     Camera.CameraInfo info = new Camera.CameraInfo();
     Camera.getCameraInfo(cameraId, info);
@@ -90,7 +90,7 @@ class Camera1Session implements CameraSession {
     } catch (RuntimeException e) {
       camera.release();
       callback.onFailure(CameraSession.FailureType.ERROR, e.getMessage());
-      return null;
+      return;
     } 
     if (!captureToTexture) {
       int frameSize = captureFormat.frameSize();
@@ -104,10 +104,9 @@ class Camera1Session implements CameraSession {
     } catch (RuntimeException e) {
       camera.release();
       callback.onFailure(CameraSession.FailureType.ERROR, e.getMessage());
-      return null;
+      return;
     } 
     callback.onDone(new Camera1Session(events, captureToTexture, applicationContext, surfaceTextureHelper, cameraId, camera, info, captureFormat, constructionTimeNs));
-    return camera;
   }
   
   private static void updateCameraParameters(Camera camera, Camera.Parameters parameters, CameraEnumerationAndroid.CaptureFormat captureFormat, Size pictureSize, boolean captureToTexture) {
@@ -166,6 +165,48 @@ class Camera1Session implements CameraSession {
       int stopTimeMs = (int)TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - stopStartTime);
       camera1StopTimeMsHistogram.addSample(stopTimeMs);
     } 
+  }
+
+  @Override
+  public boolean isZoomSupported() {
+    if (camera != null) {
+      return camera.getParameters().isZoomSupported();
+    }
+    return false;
+  }
+
+  @Override
+  public int getMaxZoom(){
+    if (camera != null) {
+      return camera.getParameters().getMaxZoom();
+    }
+    return 0;
+  }
+
+  @Override
+  public int getZoom(){
+    if (camera != null) {
+      return camera.getParameters().getZoom();
+    }
+    return 0;
+  }
+
+  @Override
+  public void setZoom(int zoom){
+    if (!isZoomSupported()) {
+      return;
+    }
+    int mZoom = zoom;
+    int maxZoom = getMaxZoom();
+    if (zoom > maxZoom) { // 放大
+      mZoom = maxZoom;
+    } else if (zoom < 0) { // 缩小
+      mZoom = 0;
+    }
+
+    Camera.Parameters parameters = camera.getParameters();
+    parameters.setZoom(mZoom);
+    camera.setParameters(parameters);
   }
   
   private void startCapturing() {

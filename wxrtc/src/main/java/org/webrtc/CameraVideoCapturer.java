@@ -6,6 +6,14 @@ public interface CameraVideoCapturer extends VideoCapturer {
   void switchCamera(CameraSwitchHandler paramCameraSwitchHandler);
   
   void switchCamera(CameraSwitchHandler paramCameraSwitchHandler, String paramString);
+
+  boolean isZoomSupported();
+
+  int getMaxZoom();
+
+  int getZoom();
+
+  void setZoom(int zoom);
   
   @Deprecated
   default void addMediaRecorderToCamera(MediaRecorder mediaRecorder, MediaRecorderHandler resultHandler) {

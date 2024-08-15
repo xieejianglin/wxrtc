@@ -22,8 +22,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
-import org.webrtc.Camera1Capturer
 import org.webrtc.Camera1Enumerator
+import org.webrtc.Camera2Enumerator
 import org.webrtc.CameraEnumerator
 import org.webrtc.CameraVideoCapturer
 import org.webrtc.CandidatePairChangeEvent
@@ -158,7 +158,9 @@ internal class PeerConnectionClient(
     private var remoteAudioVolume = 100
     private var callStartedTimeMs: Long = 0
 
-    private var camera1Capturer: Camera1Capturer? = null
+//    private var camera1Capturer: Camera1Capturer? = null
+//    private var camera2Capturer: Camera2Capturer? = null
+    private var cameraVideoCapturer: CameraVideoCapturer? = null
 
     var isNeedReconnect: Boolean = true
 //    var isPublish: Boolean = false
@@ -330,9 +332,9 @@ internal class PeerConnectionClient(
     }
 
     private fun createVideoCapturer(frontCamera: Boolean): VideoCapturer? {
-        Logging.d(TAG, "Creating capturer using camera1 API.")
-        val videoCapturer = createCameraCapturer(Camera1Enumerator(false), frontCamera) ?: return null
-        return videoCapturer
+        Logging.d(TAG, "Creating capturer using camera2 API first.")
+        return createCameraCapturer(Camera2Enumerator(appContext), frontCamera) ?:
+                createCameraCapturer(Camera1Enumerator(false), frontCamera)
     }
 
     private fun createCameraCapturer(
@@ -361,9 +363,7 @@ internal class PeerConnectionClient(
         }
         if (targetDeviceName.isNotEmpty()) {
             return enumerator.createCapturer(targetDeviceName, null).let { videoCapturer ->
-                if (videoCapturer is Camera1Capturer) {
-                    camera1Capturer = videoCapturer
-                }
+                cameraVideoCapturer = videoCapturer
                 videoCapturer
             }
         }
@@ -902,45 +902,27 @@ internal class PeerConnectionClient(
 
     val isCameraZoomSupported: Boolean
         get() {
-            if (camera1Capturer != null && camera1Capturer!!.openedCamera != null) {
-                val parameters = camera1Capturer!!.openedCamera.parameters
-                return parameters.isZoomSupported
-            }
-            return false
+            return cameraVideoCapturer?.let {
+                it.isZoomSupported
+            } ?: false
         }
 
     val cameraMaxZoom: Int
         get() {
-            if (camera1Capturer != null && camera1Capturer!!.openedCamera != null) {
-                val parameters = camera1Capturer!!.openedCamera.parameters
-                val isZoomSupported = parameters.isZoomSupported
-                if (!isZoomSupported) {
-                    return 0
-                }
-                return parameters.maxZoom
-            }
-            return 0
+            return cameraVideoCapturer?.let {
+                it.maxZoom
+            } ?: 0
         }
 
     var cameraZoom: Int
         get() {
-            if (camera1Capturer != null && camera1Capturer!!.openedCamera != null) {
-                val parameters = camera1Capturer!!.openedCamera.parameters
-                return parameters.zoom
-            }
-            return 0
+            return cameraVideoCapturer?.let {
+                it.zoom
+            } ?: 0
         }
         set(value) {
-            if (camera1Capturer != null && camera1Capturer!!.openedCamera != null) {
-                val parameters = camera1Capturer!!.openedCamera.parameters
-                val isZoomSupported = parameters.isZoomSupported
-                if (!isZoomSupported) {
-                    return
-                }
-
-                parameters.zoom = value
-
-                camera1Capturer!!.openedCamera.parameters = parameters
+            cameraVideoCapturer?.let {
+                it.zoom = value
             }
         }
 

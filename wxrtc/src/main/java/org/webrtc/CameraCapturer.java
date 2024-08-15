@@ -325,6 +325,33 @@ abstract class CameraCapturer implements CameraVideoCapturer {
   public boolean isScreencast() {
     return false;
   }
+
+  public boolean isZoomSupported() {
+    if (currentSession != null) {
+      return currentSession.isZoomSupported();
+    }
+    return false;
+  }
+
+  public int getMaxZoom() {
+    if (currentSession != null) {
+      return currentSession.getMaxZoom();
+    }
+    return 0;
+  }
+
+  public int getZoom() {
+    if (currentSession != null) {
+      return currentSession.getZoom();
+    }
+    return 0;
+  }
+
+  public void setZoom(int zoom) {
+    if (currentSession != null) {
+      currentSession.setZoom(zoom);
+    }
+  }
   
   public void printStackTrace() {
     Thread cameraThread = null;

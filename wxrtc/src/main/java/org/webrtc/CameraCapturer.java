@@ -121,14 +121,15 @@ abstract class CameraCapturer implements CameraVideoCapturer {
         } 
       }
       
-      public void onCameraClosed(CameraSession session) {
+      public void onCameraClosed(CameraSession session, String param1String) {
         CameraCapturer.this.checkIsOnCameraThread();
         synchronized (CameraCapturer.this.stateLock) {
           if (session != CameraCapturer.this.currentSession && CameraCapturer.this.currentSession != null) {
             Logging.d("CameraCapturer", "onCameraClosed from another session.");
             return;
-          } 
-          CameraCapturer.this.eventsHandler.onCameraClosed();
+          }
+
+          CameraCapturer.this.eventsHandler.onCameraClosed(param1String);
         } 
       }
       
@@ -205,7 +206,7 @@ abstract class CameraCapturer implements CameraVideoCapturer {
           
           public void onFirstFrameAvailable() {}
           
-          public void onCameraClosed() {}
+          public void onCameraClosed(String cameraName) {}
         }; 
     this.eventsHandler = eventsHandler;
     this.cameraEnumerator = cameraEnumerator;

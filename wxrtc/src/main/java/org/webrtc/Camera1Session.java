@@ -254,7 +254,7 @@ class Camera1Session implements CameraSession {
     this.surfaceTextureHelper.stopListening();
     this.camera.stopPreview();
     this.camera.release();
-    this.events.onCameraClosed(this);
+    this.events.onCameraClosed(this, String.valueOf(cameraId));
     Logging.d("Camera1Session", "Stop done");
   }
   

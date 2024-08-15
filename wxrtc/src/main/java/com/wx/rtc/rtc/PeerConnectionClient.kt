@@ -119,7 +119,7 @@ internal class PeerConnectionClient(
     private var surfaceTextureHelper: SurfaceTextureHelper? = null
     private var videoSource: VideoSource? = null
     private var preferIsac = false
-    private var videoCapturerStopped = false
+    private var videoCapturerStopped = true
     private var isError = false
     var localRender: VideoSink? = null
     var remoteSink: VideoSink? = null
@@ -335,6 +335,8 @@ internal class PeerConnectionClient(
         Logging.d(TAG, "Creating capturer using camera2 API first.")
         return createCameraCapturer(Camera2Enumerator(appContext), frontCamera) ?:
                 createCameraCapturer(Camera1Enumerator(false), frontCamera)
+//        return createCameraCapturer(Camera1Enumerator(false), frontCamera) ?:
+//                createCameraCapturer(Camera2Enumerator(appContext), frontCamera)
     }
 
     private fun createCameraCapturer(
@@ -362,7 +364,35 @@ internal class PeerConnectionClient(
             targetDeviceName = deviceNames[0]
         }
         if (targetDeviceName.isNotEmpty()) {
-            return enumerator.createCapturer(targetDeviceName, null).let { videoCapturer ->
+            return enumerator.createCapturer(targetDeviceName, object : CameraVideoCapturer.CameraEventsHandler {
+                override fun onCameraError(param1String: String?) {
+                }
+
+                override fun onCameraDisconnected() {
+                }
+
+                override fun onCameraFreezed(param1String: String?) {
+
+                }
+
+                override fun onCameraOpening(param1String: String?) {
+                    videoCapturerStopped = false
+                    cameraDeviceName = param1String
+                }
+
+                override fun onFirstFrameAvailable() {
+                }
+
+                override fun onCameraClosed(param1String: String?) {
+                    cameraDeviceName?.let {
+                        if (it == param1String) {
+                            videoCapturerStopped = true
+                            cameraDeviceName = null
+                        }
+                    }
+                }
+
+            }).let { videoCapturer ->
                 cameraVideoCapturer = videoCapturer
                 cameraEnumerator = enumerator
                 videoCapturer
@@ -632,7 +662,7 @@ internal class PeerConnectionClient(
         // NOTE: this _must_ happen while |factory| is alive!
         Logging.enableLogToDebugOutput(Logging.Severity.LS_INFO)
         val mediaStreamLabels = listOf("ARDAMS")
-        videoCapturerStopped = true
+//        videoCapturerStopped = true
         if (isPublish) {
             peerConnection!!.addTrack(createVideoTrack(false), mediaStreamLabels)
             peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
@@ -706,7 +736,7 @@ internal class PeerConnectionClient(
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }
-        videoCapturerStopped = true
+//        videoCapturerStopped = true
         videoCapturer?.dispose()
         videoCapturer = null
         Log.d(TAG, "Closing video source.")
@@ -1036,7 +1066,7 @@ internal class PeerConnectionClient(
                 Log.d(TAG, "Restart video source.")
                 val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
                 startCapture(size.width, size.height, videoParam.videoFps)
-                videoCapturerStopped = false
+//                videoCapturerStopped = false
             }
         }
     }
@@ -1049,16 +1079,18 @@ internal class PeerConnectionClient(
                     videoCapturer!!.stopCapture()
                 } catch (e: InterruptedException) {
                 }
-                videoCapturerStopped = true
+//                videoCapturerStopped = true
             }
         }
     }
 
     private fun changeVideoSource(width: Int, height: Int, framerate: Int) {
         executor.execute {
-            videoCapturer?.let {
-                Log.d(TAG, "change video source.")
-                it.changeCaptureFormat(width, height, framerate)
+            if (isCameraOpened) {
+                videoCapturer?.let {
+                    Log.d(TAG, "change video source.")
+                    it.changeCaptureFormat(width, height, framerate)
+                }
             }
         }
     }

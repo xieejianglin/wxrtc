@@ -112,6 +112,6 @@ public interface CameraVideoCapturer extends VideoCapturer {
     
     void onFirstFrameAvailable();
     
-    void onCameraClosed();
+    void onCameraClosed(String param1String);
   }
 }

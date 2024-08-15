@@ -22,7 +22,7 @@ interface CameraSession {
     
     void onCameraDisconnected(CameraSession param1CameraSession);
     
-    void onCameraClosed(CameraSession param1CameraSession);
+    void onCameraClosed(CameraSession param1CameraSession, String param1String);
     
     void onFrameCaptured(CameraSession param1CameraSession, VideoFrame param1VideoFrame);
   }

@@ -133,7 +133,7 @@ class Camera2Session implements CameraSession {
     public void onClosed(CameraDevice camera) {
       Camera2Session.this.checkIsOnCameraThread();
       Logging.d("Camera2Session", "Camera device closed.");
-      Camera2Session.this.events.onCameraClosed(Camera2Session.this);
+      Camera2Session.this.events.onCameraClosed(Camera2Session.this, camera.getId());
     }
   }
   

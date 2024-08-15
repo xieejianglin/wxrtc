@@ -52,6 +52,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val closeSnapshotButton: ImageButton?  by lazy { findViewById(R.id.btn_close_snapshot) }
     private val changeVideoButton: Button?  by lazy { findViewById(R.id.btn_change_video) }
     private val changeCameraButton: Button?  by lazy { findViewById(R.id.btn_change_camera) }
+    private val zoomInCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomin_camera) }
+    private val zoomOutCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomout_camera) }
     private val changeOrientationButton: Button?  by lazy { findViewById(R.id.btn_change_orientation) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,6 +115,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
                 isFrontCamera = !isFrontCamera
                 mWXRTC.switchCamera(isFrontCamera)
             }
+        }
+        zoomInCamreaButton?.setOnClickListener {
+            mWXRTC.cameraZoom += 1
+        }
+        zoomOutCamreaButton?.setOnClickListener {
+            mWXRTC.cameraZoom -= 1
         }
         changeOrientationButton?.setOnClickListener {
             if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {

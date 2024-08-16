@@ -33,14 +33,14 @@ public class Camera2Enumerator implements CameraEnumerator {
 
   public Camera2Enumerator(Context context) {
     this.context = context;
-    this.cameraManager = (CameraManager)context.getSystemService("camera");
+    this.cameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
   }
 
   public String[] getDeviceNames() {
     try {
       return this.cameraManager.getCameraIdList();
     } catch (CameraAccessException var2) {
-      Logging.e("Camera2Enumerator", "Camera access exception", var2);
+      Logging.e(TAG, "Camera access exception", var2);
       return new String[0];
     }
   }
@@ -69,13 +69,13 @@ public class Camera2Enumerator implements CameraEnumerator {
     try {
       return this.cameraManager.getCameraCharacteristics(deviceName);
     } catch (RuntimeException | CameraAccessException var3) {
-      Logging.e("Camera2Enumerator", "Camera access exception", var3);
+      Logging.e(TAG, "Camera access exception", var3);
       return null;
     }
   }
 
   public static boolean isSupported(Context context) {
-    CameraManager cameraManager = (CameraManager)context.getSystemService("camera");
+    CameraManager cameraManager = (CameraManager)context.getSystemService(Context.CAMERA_SERVICE);
 
     try {
       String[] cameraIds = cameraManager.getCameraIdList();
@@ -92,7 +92,7 @@ public class Camera2Enumerator implements CameraEnumerator {
 
       return true;
     } catch (RuntimeException | CameraAccessException var8) {
-      Logging.e("Camera2Enumerator", "Failed to check if camera2 is supported", var8);
+      Logging.e(TAG, "Failed to check if camera2 is supported", var8);
       return false;
     }
   }
@@ -130,7 +130,7 @@ public class Camera2Enumerator implements CameraEnumerator {
 
   @Nullable
   static List<CameraEnumerationAndroid.CaptureFormat> getSupportedFormats(Context context, String cameraId) {
-    return getSupportedFormats((CameraManager)context.getSystemService("camera"), cameraId);
+    return getSupportedFormats((CameraManager)context.getSystemService(Context.CAMERA_SERVICE), cameraId);
   }
 
   @Nullable
@@ -139,14 +139,14 @@ public class Camera2Enumerator implements CameraEnumerator {
       if (cachedSupportedFormats.containsKey(cameraId)) {
         return (List)cachedSupportedFormats.get(cameraId);
       } else {
-        Logging.d("Camera2Enumerator", "Get supported formats for camera index " + cameraId + ".");
+        Logging.d(TAG, "Get supported formats for camera index " + cameraId + ".");
         long startTimeMs = SystemClock.elapsedRealtime();
 
         CameraCharacteristics cameraCharacteristics;
         try {
           cameraCharacteristics = cameraManager.getCameraCharacteristics(cameraId);
         } catch (Exception var19) {
-          Logging.e("Camera2Enumerator", "getCameraCharacteristics()", var19);
+          Logging.e(TAG, "getCameraCharacteristics()", var19);
           return new ArrayList();
         }
 
@@ -173,14 +173,14 @@ public class Camera2Enumerator implements CameraEnumerator {
           } catch (Exception var18) {
           }
 
-          int maxFps = minFrameDurationNs == 0L ? defaultMaxFps : (int)Math.round(1.0E9 / (double)minFrameDurationNs) * 1000;
+          int maxFps = minFrameDurationNs == 0L ? defaultMaxFps : (int)Math.round(NANO_SECONDS_PER_SECOND / (double)minFrameDurationNs) * 1000;
           formatList.add(new CameraEnumerationAndroid.CaptureFormat(size.width, size.height, 0, maxFps));
-          Logging.d("Camera2Enumerator", "Format: " + size.width + "x" + size.height + "@" + maxFps);
+          Logging.d(TAG, "Format: " + size.width + "x" + size.height + "@" + maxFps);
         }
 
         cachedSupportedFormats.put(cameraId, formatList);
         long endTimeMs = SystemClock.elapsedRealtime();
-        Logging.d("Camera2Enumerator", "Get supported formats for camera index " + cameraId + " done. Time spent: " + (endTimeMs - startTimeMs) + " ms.");
+        Logging.d(TAG, "Get supported formats for camera index " + cameraId + " done. Time spent: " + (endTimeMs - startTimeMs) + " ms.");
         return formatList;
       }
     }

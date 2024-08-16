@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 public class EglRenderer implements VideoSink {
   private static final String TAG = "EglRenderer";
-  private static final long LOG_INTERVAL_SEC = 4L;
+  private static final long LOG_INTERVAL_SEC = 4;
   protected final String name;
   private final Object handlerLock;
   @Nullable
@@ -72,14 +72,14 @@ public class EglRenderer implements VideoSink {
     this.frameLock = new Object();
     this.layoutLock = new Object();
     this.statisticsLock = new Object();
-    this.bitmapTextureFramebuffer = new GlTextureFrameBuffer(6408);
+    this.bitmapTextureFramebuffer = new GlTextureFrameBuffer(GLES20.GL_RGBA);
     this.logStatisticsRunnable = new Runnable() {
       public void run() {
         EglRenderer.this.logStatistics();
         synchronized(EglRenderer.this.handlerLock) {
           if (EglRenderer.this.renderThreadHandler != null) {
             EglRenderer.this.renderThreadHandler.removeCallbacks(EglRenderer.this.logStatisticsRunnable);
-            EglRenderer.this.renderThreadHandler.postDelayed(EglRenderer.this.logStatisticsRunnable, TimeUnit.SECONDS.toMillis(4L));
+            EglRenderer.this.renderThreadHandler.postDelayed(EglRenderer.this.logStatisticsRunnable, TimeUnit.SECONDS.toMillis(LOG_INTERVAL_SEC));
           }
 
         }
@@ -98,7 +98,7 @@ public class EglRenderer implements VideoSink {
         this.logD("Initializing EglRenderer");
         this.drawer = drawer;
         this.usePresentationTimeStamp = usePresentationTimeStamp;
-        HandlerThread renderThread = new HandlerThread(this.name + "EglRenderer");
+        HandlerThread renderThread = new HandlerThread(this.name + TAG);
         renderThread.start();
         this.renderThreadHandler = new HandlerWithExceptionCallback(renderThread.getLooper(), new Runnable() {
           public void run() {
@@ -120,7 +120,7 @@ public class EglRenderer implements VideoSink {
         this.renderThreadHandler.post(this.eglSurfaceCreationRunnable);
         long currentTimeNs = System.nanoTime();
         this.resetStatistics(currentTimeNs);
-        this.renderThreadHandler.postDelayed(this.logStatisticsRunnable, TimeUnit.SECONDS.toMillis(4L));
+        this.renderThreadHandler.postDelayed(this.logStatisticsRunnable, TimeUnit.SECONDS.toMillis(LOG_INTERVAL_SEC));
       }
     }
   }
@@ -381,7 +381,7 @@ public class EglRenderer implements VideoSink {
     if (this.eglBase != null && this.eglBase.hasSurface()) {
       this.logD("clearSurface");
       GLES20.glClearColor(r, g, b, a);
-      GLES20.glClear(16384);
+      GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
       this.eglBase.swapBuffers();
     }
 
@@ -458,7 +458,7 @@ public class EglRenderer implements VideoSink {
       try {
         if (shouldRenderFrame) {
           GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-          GLES20.glClear(16384);
+          GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
           this.frameDrawer.drawFrame(frame, this.drawer, this.drawMatrix, 0, 0, this.eglBase.surfaceWidth(), this.eglBase.surfaceHeight());
           long swapBuffersStartTimeNs = System.nanoTime();
           if (this.usePresentationTimeStamp) {
@@ -521,21 +521,21 @@ public class EglRenderer implements VideoSink {
           int scaledHeight = (int)(listenerAndParams.scale * (float)frame.getRotatedHeight());
           if (scaledWidth != 0 && scaledHeight != 0) {
             this.bitmapTextureFramebuffer.setSize(scaledWidth, scaledHeight);
-            GLES20.glBindFramebuffer(36160, this.bitmapTextureFramebuffer.getFrameBufferId());
-            GLES20.glFramebufferTexture2D(36160, 36064, 3553, this.bitmapTextureFramebuffer.getTextureId(), 0);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, this.bitmapTextureFramebuffer.getFrameBufferId());
+            GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, this.bitmapTextureFramebuffer.getTextureId(), 0);
             GLES20.glClearColor(0.0F, 0.0F, 0.0F, 0.0F);
-            GLES20.glClear(16384);
+            GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             this.frameDrawer.drawFrame(frame, listenerAndParams.drawer, this.drawMatrix, 0, 0, scaledWidth, scaledHeight);
             ByteBuffer bitmapBuffer = ByteBuffer.allocateDirect(scaledWidth * scaledHeight * 4);
             GLES20.glViewport(0, 0, scaledWidth, scaledHeight);
-            GLES20.glReadPixels(0, 0, scaledWidth, scaledHeight, 6408, 5121, bitmapBuffer);
-            GLES20.glBindFramebuffer(36160, 0);
+            GLES20.glReadPixels(0, 0, scaledWidth, scaledHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, bitmapBuffer);
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
             GlUtil.checkNoGLES2Error("EglRenderer.notifyCallbacks");
             Bitmap bitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Config.ARGB_8888);
             bitmap.copyPixelsFromBuffer(bitmapBuffer);
             listenerAndParams.listener.onFrame(bitmap);
           } else {
-            listenerAndParams.listener.onFrame((Bitmap)null);
+            listenerAndParams.listener.onFrame(null);
           }
         }
       }
@@ -561,15 +561,15 @@ public class EglRenderer implements VideoSink {
   }
 
   private void logE(String string, Throwable e) {
-    Logging.e("EglRenderer", this.name + string, e);
+    Logging.e(TAG, this.name + string, e);
   }
 
   private void logD(String string) {
-    Logging.d("EglRenderer", this.name + string);
+    Logging.d(TAG, this.name + string);
   }
 
   private void logW(String string) {
-    Logging.w("EglRenderer", this.name + string);
+    Logging.w(TAG, this.name + string);
   }
 
   private class EglSurfaceCreation implements Runnable {
@@ -595,7 +595,7 @@ public class EglRenderer implements VideoSink {
         }
 
         EglRenderer.this.eglBase.makeCurrent();
-        GLES20.glPixelStorei(3317, 1);
+        GLES20.glPixelStorei(GLES20.GL_UNPACK_ALIGNMENT, 1);
       }
 
     }
@@ -613,7 +613,7 @@ public class EglRenderer implements VideoSink {
       try {
         super.dispatchMessage(msg);
       } catch (Exception var3) {
-        Logging.e("EglRenderer", "Exception on EglRenderer thread", var3);
+        Logging.e(TAG, "Exception on EglRenderer thread", var3);
         this.exceptionCallback.run();
         throw var3;
       }

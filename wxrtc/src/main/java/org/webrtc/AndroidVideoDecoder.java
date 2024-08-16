@@ -101,7 +101,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   AndroidVideoDecoder(MediaCodecWrapperFactory mediaCodecWrapperFactory, String codecName, VideoCodecMimeType codecType, int colorFormat, @Nullable EglBase.Context sharedContext) {
     if (!isSupportedColorFormat(colorFormat))
       throw new IllegalArgumentException("Unsupported color format: " + colorFormat); 
-    Logging.d("AndroidVideoDecoder", "ctor name: " + codecName + " type: " + codecType + " color format: " + colorFormat + " context: " + sharedContext);
+    Logging.d(TAG, "ctor name: " + codecName + " type: " + codecType + " color format: " + colorFormat + " context: " + sharedContext);
     this.mediaCodecWrapperFactory = mediaCodecWrapperFactory;
     this.codecName = codecName;
     this.codecType = codecType;
@@ -123,9 +123,9 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   
   private VideoCodecStatus initDecodeInternal(int width, int height) {
     this.decoderThreadChecker.checkIsOnValidThread();
-    Logging.d("AndroidVideoDecoder", "initDecodeInternal name: " + this.codecName + " type: " + this.codecType + " width: " + width + " height: " + height + " color format: " + this.colorFormat);
+    Logging.d(TAG, "initDecodeInternal name: " + this.codecName + " type: " + this.codecType + " width: " + width + " height: " + height + " color format: " + this.colorFormat);
     if (this.outputThread != null) {
-      Logging.e("AndroidVideoDecoder", "initDecodeInternal called while the codec is already running");
+      Logging.e(TAG, "initDecodeInternal called while the codec is already running");
       return VideoCodecStatus.FALLBACK_SOFTWARE;
     } 
     this.width = width;
@@ -137,7 +137,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
     try {
       this.codec = this.mediaCodecWrapperFactory.createByCodecName(this.codecName);
     } catch (IOException|IllegalArgumentException|IllegalStateException e) {
-      Logging.e("AndroidVideoDecoder", "Cannot create media decoder " + this.codecName);
+      Logging.e(TAG, "Cannot create media decoder " + this.codecName);
       return VideoCodecStatus.FALLBACK_SOFTWARE;
     } 
     try {
@@ -147,14 +147,14 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
       this.codec.configure(format, this.surface, null, 0);
       this.codec.start();
     } catch (IllegalStateException|IllegalArgumentException e) {
-      Logging.e("AndroidVideoDecoder", "initDecode failed", e);
+      Logging.e(TAG, "initDecode failed", e);
       release();
       return VideoCodecStatus.FALLBACK_SOFTWARE;
     } 
     this.running = true;
     this.outputThread = createOutputThread();
     this.outputThread.start();
-    Logging.d("AndroidVideoDecoder", "initDecodeInternal done");
+    Logging.d(TAG, "initDecodeInternal done");
     return VideoCodecStatus.OK;
   }
   
@@ -163,16 +163,16 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
     ByteBuffer buffer;
     this.decoderThreadChecker.checkIsOnValidThread();
     if (this.codec == null || this.callback == null) {
-      Logging.d("AndroidVideoDecoder", "decode uninitalized, codec: " + ((this.codec != null) ? 1 : 0) + ", callback: " + this.callback);
+      Logging.d(TAG, "decode uninitalized, codec: " + ((this.codec != null) ? VideoCodecStatus.NO_OUTPUT : VideoCodecStatus.OK) + ", callback: " + this.callback);
       return VideoCodecStatus.UNINITIALIZED;
     } 
     if (frame.buffer == null) {
-      Logging.e("AndroidVideoDecoder", "decode() - no input data");
+      Logging.e(TAG, "decode() - no input data");
       return VideoCodecStatus.ERR_PARAMETER;
     } 
     int size = frame.buffer.remaining();
     if (size == 0) {
-      Logging.e("AndroidVideoDecoder", "decode() - input buffer empty");
+      Logging.e(TAG, "decode() - input buffer empty");
       return VideoCodecStatus.ERR_PARAMETER;
     } 
     synchronized (this.dimensionLock) {
@@ -186,27 +186,27 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
     } 
     if (this.keyFrameRequired)
       if (frame.frameType != EncodedImage.FrameType.VideoFrameKey) {
-        Logging.e("AndroidVideoDecoder", "decode() - key frame required first");
+        Logging.e(TAG, "decode() - key frame required first");
         return VideoCodecStatus.NO_OUTPUT;
       }  
     try {
-      index = this.codec.dequeueInputBuffer(500000L);
+      index = this.codec.dequeueInputBuffer(DEQUEUE_INPUT_TIMEOUT_US);
     } catch (IllegalStateException e) {
-      Logging.e("AndroidVideoDecoder", "dequeueInputBuffer failed", e);
+      Logging.e(TAG, "dequeueInputBuffer failed", e);
       return VideoCodecStatus.ERROR;
     } 
     if (index < 0) {
-      Logging.e("AndroidVideoDecoder", "decode() - no HW buffers available; decoder falling behind");
+      Logging.e(TAG, "decode() - no HW buffers available; decoder falling behind");
       return VideoCodecStatus.ERROR;
     } 
     try {
       buffer = this.codec.getInputBuffer(index);
     } catch (IllegalStateException e) {
-      Logging.e("AndroidVideoDecoder", "getInputBuffer with index=" + index + " failed", e);
+      Logging.e(TAG, "getInputBuffer with index=" + index + " failed", e);
       return VideoCodecStatus.ERROR;
     } 
     if (buffer.capacity() < size) {
-      Logging.e("AndroidVideoDecoder", "decode() - HW buffer too small");
+      Logging.e(TAG, "decode() - HW buffer too small");
       return VideoCodecStatus.ERROR;
     } 
     buffer.put(frame.buffer);
@@ -215,7 +215,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
       this.codec.queueInputBuffer(index, 0, size, TimeUnit.NANOSECONDS
           .toMicros(frame.captureTimeNs), 0);
     } catch (IllegalStateException e) {
-      Logging.e("AndroidVideoDecoder", "queueInputBuffer failed", e);
+      Logging.e(TAG, "queueInputBuffer failed", e);
       this.frameInfos.pollLast();
       return VideoCodecStatus.ERROR;
     } 
@@ -229,7 +229,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   }
   
   public VideoCodecStatus release() {
-    Logging.d("AndroidVideoDecoder", "release");
+    Logging.d(TAG, "release");
     VideoCodecStatus status = releaseInternal();
     if (this.surface != null) {
       releaseSurface();
@@ -248,17 +248,17 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   
   private VideoCodecStatus releaseInternal() {
     if (!this.running) {
-      Logging.d("AndroidVideoDecoder", "release: Decoder is not running.");
+      Logging.d(TAG, "release: Decoder is not running.");
       return VideoCodecStatus.OK;
     } 
     try {
       this.running = false;
-      if (!ThreadUtils.joinUninterruptibly(this.outputThread, 5000L)) {
-        Logging.e("AndroidVideoDecoder", "Media decoder release timeout", new RuntimeException());
+      if (!ThreadUtils.joinUninterruptibly(this.outputThread, MEDIA_CODEC_RELEASE_TIMEOUT_MS)) {
+        Logging.e(TAG, "Media decoder release timeout", new RuntimeException());
         return VideoCodecStatus.TIMEOUT;
       } 
       if (this.shutdownException != null) {
-        Logging.e("AndroidVideoDecoder", "Media decoder release error", new RuntimeException(this.shutdownException));
+        Logging.e(TAG, "Media decoder release error", new RuntimeException(this.shutdownException));
         this.shutdownException = null;
         return VideoCodecStatus.ERROR;
       } 
@@ -292,18 +292,18 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
     this.outputThreadChecker.checkIsOnValidThread();
     try {
       MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
-      int index = this.codec.dequeueOutputBuffer(info, 100000L);
+      int index = this.codec.dequeueOutputBuffer(info, DEQUEUE_OUTPUT_BUFFER_TIMEOUT_US);
       if (index == -2) {
         reformat(this.codec.getOutputFormat());
         return;
       } 
       if (index < 0) {
-        Logging.v("AndroidVideoDecoder", "dequeueOutputBuffer returned " + index);
+        Logging.v(TAG, "dequeueOutputBuffer returned " + index);
         return;
       } 
       FrameInfo frameInfo = this.frameInfos.poll();
       Integer decodeTimeMs = null;
-      int rotation = 0;
+      int rotation = Surface.ROTATION_0;
       if (frameInfo != null) {
         decodeTimeMs = Integer.valueOf((int)(SystemClock.elapsedRealtime() - frameInfo.decodeStartTimeMs));
         rotation = frameInfo.rotation;
@@ -315,7 +315,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
         deliverByteFrame(index, info, rotation, decodeTimeMs);
       } 
     } catch (IllegalStateException e) {
-      Logging.e("AndroidVideoDecoder", "deliverDecodedFrame failed", e);
+      Logging.e(TAG, "deliverDecodedFrame failed", e);
     } 
   }
   
@@ -362,7 +362,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
       sliceHeight = this.sliceHeight;
     } 
     if (info.size < width * height * 3 / 2) {
-      Logging.e("AndroidVideoDecoder", "Insufficient output buffer size: " + info.size);
+      Logging.e(TAG, "Insufficient output buffer size: " + info.size);
       return;
     } 
     if (info.size < stride * height * 3 / 2 && sliceHeight == height && stride > width)
@@ -429,7 +429,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   private void reformat(MediaFormat format) {
     int newWidth, newHeight;
     this.outputThreadChecker.checkIsOnValidThread();
-    Logging.d("AndroidVideoDecoder", "Decoder format changed: " + format);
+    Logging.d(TAG, "Decoder format changed: " + format);
     if (format.containsKey("crop-left") && format
       .containsKey("crop-right") && format
       .containsKey("crop-bottom") && format
@@ -447,7 +447,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
           return;
         } 
         if (newWidth <= 0 || newHeight <= 0) {
-          Logging.w("AndroidVideoDecoder", "Unexpected format dimensions. Configured " + this.width + "*" + this.height + ". New " + newWidth + "*" + newHeight + ". Skip it");
+          Logging.w(TAG, "Unexpected format dimensions. Configured " + this.width + "*" + this.height + ". New " + newWidth + "*" + newHeight + ". Skip it");
           return;
         } 
         this.width = newWidth;
@@ -456,7 +456,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
     } 
     if (this.surfaceTextureHelper == null && format.containsKey("color-format")) {
       this.colorFormat = format.getInteger("color-format");
-      Logging.d("AndroidVideoDecoder", "Color: 0x" + Integer.toHexString(this.colorFormat));
+      Logging.d(TAG, "Color: 0x" + Integer.toHexString(this.colorFormat));
       if (!isSupportedColorFormat(this.colorFormat)) {
         stopOnOutputThread(new IllegalStateException("Unsupported color format: " + this.colorFormat));
         return;
@@ -467,7 +467,7 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
         this.stride = format.getInteger("stride"); 
       if (format.containsKey("slice-height"))
         this.sliceHeight = format.getInteger("slice-height"); 
-      Logging.d("AndroidVideoDecoder", "Frame stride and slice height: " + this.stride + " x " + this.sliceHeight);
+      Logging.d(TAG, "Frame stride and slice height: " + this.stride + " x " + this.sliceHeight);
       this.stride = Math.max(this.width, this.stride);
       this.sliceHeight = Math.max(this.height, this.sliceHeight);
     } 
@@ -475,19 +475,19 @@ class AndroidVideoDecoder implements VideoDecoder, VideoSink {
   
   private void releaseCodecOnOutputThread() {
     this.outputThreadChecker.checkIsOnValidThread();
-    Logging.d("AndroidVideoDecoder", "Releasing MediaCodec on output thread");
+    Logging.d(TAG, "Releasing MediaCodec on output thread");
     try {
       this.codec.stop();
     } catch (Exception e) {
-      Logging.e("AndroidVideoDecoder", "Media decoder stop failed", e);
+      Logging.e(TAG, "Media decoder stop failed", e);
     } 
     try {
       this.codec.release();
     } catch (Exception e) {
-      Logging.e("AndroidVideoDecoder", "Media decoder release failed", e);
+      Logging.e(TAG, "Media decoder release failed", e);
       this.shutdownException = e;
     } 
-    Logging.d("AndroidVideoDecoder", "Release on output thread done");
+    Logging.d(TAG, "Release on output thread done");
   }
   
   private void stopOnOutputThread(Exception e) {

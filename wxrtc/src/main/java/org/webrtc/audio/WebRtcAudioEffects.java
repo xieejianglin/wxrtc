@@ -38,18 +38,18 @@ class WebRtcAudioEffects {
   }
   
   public WebRtcAudioEffects() {
-    Logging.d("WebRtcAudioEffectsExternal", "ctor" + WebRtcAudioUtils.getThreadInfo());
+    Logging.d(TAG, "ctor" + WebRtcAudioUtils.getThreadInfo());
   }
   
   public boolean setAEC(boolean enable) {
-    Logging.d("WebRtcAudioEffectsExternal", "setAEC(" + enable + ")");
+    Logging.d(TAG, "setAEC(" + enable + ")");
     if (!isAcousticEchoCancelerSupported()) {
-      Logging.w("WebRtcAudioEffectsExternal", "Platform AEC is not supported");
+      Logging.w(TAG, "Platform AEC is not supported");
       this.shouldEnableAec = false;
       return false;
     } 
     if (this.aec != null && enable != this.shouldEnableAec) {
-      Logging.e("WebRtcAudioEffectsExternal", "Platform AEC state can't be modified while recording");
+      Logging.e(TAG, "Platform AEC state can't be modified while recording");
       return false;
     } 
     this.shouldEnableAec = enable;
@@ -57,14 +57,14 @@ class WebRtcAudioEffects {
   }
   
   public boolean setNS(boolean enable) {
-    Logging.d("WebRtcAudioEffectsExternal", "setNS(" + enable + ")");
+    Logging.d(TAG, "setNS(" + enable + ")");
     if (!isNoiseSuppressorSupported()) {
-      Logging.w("WebRtcAudioEffectsExternal", "Platform NS is not supported");
+      Logging.w(TAG, "Platform NS is not supported");
       this.shouldEnableNs = false;
       return false;
     } 
     if (this.ns != null && enable != this.shouldEnableNs) {
-      Logging.e("WebRtcAudioEffectsExternal", "Platform NS state can't be modified while recording");
+      Logging.e(TAG, "Platform NS state can't be modified while recording");
       return false;
     } 
     this.shouldEnableNs = enable;
@@ -72,7 +72,7 @@ class WebRtcAudioEffects {
   }
   
   public void enable(int audioSession) {
-    Logging.d("WebRtcAudioEffectsExternal", "enable(audioSession=" + audioSession + ")");
+    Logging.d(TAG, "enable(audioSession=" + audioSession + ")");
     assertTrue((this.aec == null));
     assertTrue((this.ns == null));
     if (isAcousticEchoCancelerSupported()) {
@@ -81,12 +81,12 @@ class WebRtcAudioEffects {
         boolean enabled = this.aec.getEnabled();
         boolean enable = (this.shouldEnableAec && isAcousticEchoCancelerSupported());
         if (this.aec.setEnabled(enable) != 0)
-          Logging.e("WebRtcAudioEffectsExternal", "Failed to set the AcousticEchoCanceler state"); 
-        Logging.d("WebRtcAudioEffectsExternal", "AcousticEchoCanceler: was " + (
+          Logging.e(TAG, "Failed to set the AcousticEchoCanceler state"); 
+        Logging.d(TAG, "AcousticEchoCanceler: was " + (
             enabled ? "enabled" : "disabled") + ", enable: " + enable + ", is now: " + (
             this.aec.getEnabled() ? "enabled" : "disabled"));
       } else {
-        Logging.e("WebRtcAudioEffectsExternal", "Failed to create the AcousticEchoCanceler instance");
+        Logging.e(TAG, "Failed to create the AcousticEchoCanceler instance");
       } 
     } 
     if (isNoiseSuppressorSupported()) {
@@ -95,18 +95,18 @@ class WebRtcAudioEffects {
         boolean enabled = this.ns.getEnabled();
         boolean enable = (this.shouldEnableNs && isNoiseSuppressorSupported());
         if (this.ns.setEnabled(enable) != 0)
-          Logging.e("WebRtcAudioEffectsExternal", "Failed to set the NoiseSuppressor state"); 
-        Logging.d("WebRtcAudioEffectsExternal", "NoiseSuppressor: was " + (
+          Logging.e(TAG, "Failed to set the NoiseSuppressor state"); 
+        Logging.d(TAG, "NoiseSuppressor: was " + (
             enabled ? "enabled" : "disabled") + ", enable: " + enable + ", is now: " + (
             this.ns.getEnabled() ? "enabled" : "disabled"));
       } else {
-        Logging.e("WebRtcAudioEffectsExternal", "Failed to create the NoiseSuppressor instance");
+        Logging.e(TAG, "Failed to create the NoiseSuppressor instance");
       } 
     } 
   }
   
   public void release() {
-    Logging.d("WebRtcAudioEffectsExternal", "release");
+    Logging.d(TAG, "release");
     if (this.aec != null) {
       this.aec.release();
       this.aec = null;

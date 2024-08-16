@@ -2,6 +2,7 @@ package org.webrtc;
 
 import android.annotation.TargetApi;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
 import android.os.Build;
 import androidx.annotation.Nullable;
 import java.util.HashMap;
@@ -28,11 +29,11 @@ class MediaCodecUtils {
   
   static final int COLOR_QCOM_FORMATYUV420PackedSemiPlanar32m = 2141391876;
   
-  static final int[] DECODER_COLOR_FORMATS = new int[] { 19, 21, 2141391872, 2141391873, 2141391874, 2141391875, 2141391876 };
+  static final int[] DECODER_COLOR_FORMATS = new int[] { CodecCapabilities.COLOR_FormatYUV420Planar, CodecCapabilities.COLOR_FormatYUV420SemiPlanar, CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar, COLOR_QCOM_FORMATYVU420PackedSemiPlanar32m4ka, COLOR_QCOM_FORMATYVU420PackedSemiPlanar16m4ka, COLOR_QCOM_FORMATYVU420PackedSemiPlanar64x32Tile2m8ka, COLOR_QCOM_FORMATYUV420PackedSemiPlanar32m };
   
-  static final int[] ENCODER_COLOR_FORMATS = new int[] { 19, 21, 2141391872, 2141391876 };
+  static final int[] ENCODER_COLOR_FORMATS = new int[] { CodecCapabilities.COLOR_FormatYUV420Planar, CodecCapabilities.COLOR_FormatYUV420SemiPlanar, CodecCapabilities.COLOR_QCOM_FormatYUV420SemiPlanar, COLOR_QCOM_FORMATYUV420PackedSemiPlanar32m };
   
-  static final int[] TEXTURE_COLOR_FORMATS = new int[] { 2130708361 };
+  static final int[] TEXTURE_COLOR_FORMATS = new int[] { CodecCapabilities.COLOR_FormatSurface };
   
   @Nullable
   static Integer selectColorFormat(int[] supportedColorFormats, MediaCodecInfo.CodecCapabilities capabilities) {
@@ -67,18 +68,18 @@ class MediaCodecUtils {
   }
   
   static boolean isHardwareAccelerated(MediaCodecInfo info) {
-    if (Build.VERSION.SDK_INT >= 29)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
       return isHardwareAcceleratedQOrHigher(info); 
     return !isSoftwareOnly(info);
   }
   
-  @TargetApi(29)
+  @TargetApi(Build.VERSION_CODES.Q)
   private static boolean isHardwareAcceleratedQOrHigher(MediaCodecInfo codecInfo) {
     return codecInfo.isHardwareAccelerated();
   }
   
   static boolean isSoftwareOnly(MediaCodecInfo codecInfo) {
-    if (Build.VERSION.SDK_INT >= 29)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
       return isSoftwareOnlyQOrHigher(codecInfo); 
     String name = codecInfo.getName();
     for (String prefix : SOFTWARE_IMPLEMENTATION_PREFIXES) {
@@ -88,7 +89,7 @@ class MediaCodecUtils {
     return false;
   }
   
-  @TargetApi(29)
+  @TargetApi(Build.VERSION_CODES.Q)
   private static boolean isSoftwareOnlyQOrHigher(MediaCodecInfo codecInfo) {
     return codecInfo.isSoftwareOnly();
   }

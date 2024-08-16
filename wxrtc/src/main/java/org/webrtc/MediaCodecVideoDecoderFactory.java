@@ -55,7 +55,7 @@ class MediaCodecVideoDecoderFactory implements VideoDecoderFactory {
       try {
         info = MediaCodecList.getCodecInfoAt(i);
       } catch (IllegalArgumentException e) {
-        Logging.e("MediaCodecVideoDecoderFactory", "Cannot retrieve decoder codec info", e);
+        Logging.e(TAG, "Cannot retrieve decoder codec info", e);
       } 
       if (info != null && !info.isEncoder())
         if (isSupportedCodec(info, type))
@@ -83,7 +83,7 @@ class MediaCodecVideoDecoderFactory implements VideoDecoderFactory {
     String name = info.getName();
     if (name.startsWith(MediaCodecUtils.QCOM_PREFIX))
       return true; 
-    if (Build.VERSION.SDK_INT >= 23 && name.startsWith(MediaCodecUtils.EXYNOS_PREFIX))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && name.startsWith(MediaCodecUtils.EXYNOS_PREFIX))
       return true; 
     return false;
   }

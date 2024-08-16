@@ -52,7 +52,7 @@ public class PeerConnectionFactory {
       Logging.injectLoggable(options.loggable, options.loggableSeverity);
       nativeInjectLoggable(new JNILogging(options.loggable), options.loggableSeverity.ordinal());
     } else {
-      Logging.d("PeerConnectionFactory", "PeerConnectionFactory was initialized without an injected Loggable. Any existing Loggable will be deleted.");
+      Logging.d(TAG, "PeerConnectionFactory was initialized without an injected Loggable. Any existing Loggable will be deleted.");
       Logging.deleteInjectedLoggable();
       nativeDeleteLoggable();
     }
@@ -227,19 +227,19 @@ public class PeerConnectionFactory {
       String threadName = threadInfo.thread.getName();
       StackTraceElement[] stackTraces = threadInfo.thread.getStackTrace();
       if (stackTraces.length > 0) {
-        Logging.w("PeerConnectionFactory", threadName + " stacktrace:");
+        Logging.w(TAG, threadName + " stacktrace:");
         StackTraceElement[] var4 = stackTraces;
         int var5 = stackTraces.length;
 
         for(int var6 = 0; var6 < var5; ++var6) {
           StackTraceElement stackTrace = var4[var6];
-          Logging.w("PeerConnectionFactory", stackTrace.toString());
+          Logging.w(TAG, stackTrace.toString());
         }
       }
 
       if (printNativeStackTrace) {
-        Logging.w("PeerConnectionFactory", "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
-        Logging.w("PeerConnectionFactory", "pid: " + Process.myPid() + ", tid: " + threadInfo.tid + ", name: " + threadName + "  >>> WebRTC <<<");
+        Logging.w(TAG, "*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***");
+        Logging.w(TAG, "pid: " + Process.myPid() + ", tid: " + threadInfo.tid + ", name: " + threadName + "  >>> WebRTC <<<");
         nativePrintStackTrace(threadInfo.tid);
       }
 
@@ -264,21 +264,21 @@ public class PeerConnectionFactory {
   private void onNetworkThreadReady() {
     this.networkThread = PeerConnectionFactory.ThreadInfo.getCurrent();
     staticNetworkThread = this.networkThread;
-    Logging.d("PeerConnectionFactory", "onNetworkThreadReady");
+    Logging.d(TAG, "onNetworkThreadReady");
   }
 
   @CalledByNative
   private void onWorkerThreadReady() {
     this.workerThread = PeerConnectionFactory.ThreadInfo.getCurrent();
     staticWorkerThread = this.workerThread;
-    Logging.d("PeerConnectionFactory", "onWorkerThreadReady");
+    Logging.d(TAG, "onWorkerThreadReady");
   }
 
   @CalledByNative
   private void onSignalingThreadReady() {
     this.signalingThread = PeerConnectionFactory.ThreadInfo.getCurrent();
     staticSignalingThread = this.signalingThread;
-    Logging.d("PeerConnectionFactory", "onSignalingThreadReady");
+    Logging.d(TAG, "onSignalingThreadReady");
   }
 
   private static native void nativeInitializeAndroidGlobals();

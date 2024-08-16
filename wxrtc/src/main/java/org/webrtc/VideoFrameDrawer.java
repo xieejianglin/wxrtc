@@ -47,19 +47,19 @@ public class VideoFrameDrawer {
       if (this.yuvTextures == null) {
         this.yuvTextures = new int[3];
         for (i = 0; i < 3; i++)
-          this.yuvTextures[i] = GlUtil.generateTexture(3553); 
+          this.yuvTextures[i] = GlUtil.generateTexture(GLES20.GL_TEXTURE_2D);
       } 
       for (i = 0; i < 3; i++) {
         ByteBuffer packedByteBuffer;
-        GLES20.glActiveTexture(33984 + i);
-        GLES20.glBindTexture(3553, this.yuvTextures[i]);
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, this.yuvTextures[i]);
         if (strides[i] == planeWidths[i]) {
           packedByteBuffer = planes[i];
         } else {
           YuvHelper.copyPlane(planes[i], strides[i], this.copyBuffer, planeWidths[i], planeWidths[i], planeHeights[i]);
           packedByteBuffer = this.copyBuffer;
         } 
-        GLES20.glTexImage2D(3553, 0, 6409, planeWidths[i], planeHeights[i], 0, 6409, 5121, packedByteBuffer);
+        GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_LUMINANCE, planeWidths[i], planeHeights[i], 0, GLES20.GL_LUMINANCE, GLES20.GL_UNSIGNED_BYTE, packedByteBuffer);
       } 
       return this.yuvTextures;
     }

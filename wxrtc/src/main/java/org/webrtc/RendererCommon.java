@@ -37,7 +37,11 @@ public class RendererCommon {
   }
 
   public static android.graphics.Matrix convertMatrixToAndroidGraphicsMatrix(float[] matrix4x4) {
-    float[] values = new float[]{matrix4x4[0], matrix4x4[4], matrix4x4[12], matrix4x4[1], matrix4x4[5], matrix4x4[13], matrix4x4[3], matrix4x4[7], matrix4x4[15]};
+    float[] values = {
+            matrix4x4[0 * 4 + 0], matrix4x4[1 * 4 + 0], matrix4x4[3 * 4 + 0],
+            matrix4x4[0 * 4 + 1], matrix4x4[1 * 4 + 1], matrix4x4[3 * 4 + 1],
+            matrix4x4[0 * 4 + 3], matrix4x4[1 * 4 + 3], matrix4x4[3 * 4 + 3],
+    };
     android.graphics.Matrix matrix = new android.graphics.Matrix();
     matrix.setValues(values);
     return matrix;
@@ -46,7 +50,12 @@ public class RendererCommon {
   public static float[] convertMatrixFromAndroidGraphicsMatrix(android.graphics.Matrix matrix) {
     float[] values = new float[9];
     matrix.getValues(values);
-    float[] matrix4x4 = new float[]{values[0], values[3], 0.0F, values[6], values[1], values[4], 0.0F, values[7], 0.0F, 0.0F, 1.0F, 0.0F, values[2], values[5], 0.0F, values[8]};
+    float[] matrix4x4 = {
+            values[0 * 3 + 0],  values[1 * 3 + 0], 0,  values[2 * 3 + 0],
+            values[0 * 3 + 1],  values[1 * 3 + 1], 0,  values[2 * 3 + 1],
+            0,                  0,                 1,  0,
+            values[0 * 3 + 2],  values[1 * 3 + 2], 0,  values[2 * 3 + 2],
+    };
     return matrix4x4;
   }
 
@@ -55,10 +64,10 @@ public class RendererCommon {
   }
 
   private static void adjustOrigin(float[] matrix) {
-    matrix[12] -= 0.5F * (matrix[0] + matrix[4]);
-    matrix[13] -= 0.5F * (matrix[1] + matrix[5]);
-    matrix[12] += 0.5F;
-    matrix[13] += 0.5F;
+    matrix[12] -= 0.5f * (matrix[0] + matrix[4]);
+    matrix[13] -= 0.5f * (matrix[1] + matrix[5]);
+    matrix[12] += 0.5f;
+    matrix[13] += 0.5f;
   }
 
   private static float convertScalingTypeToVisibleFraction(ScalingType scalingType) {
@@ -76,8 +85,8 @@ public class RendererCommon {
 
   public static Point getDisplaySize(float minVisibleFraction, float videoAspectRatio, int maxDisplayWidth, int maxDisplayHeight) {
     if (minVisibleFraction != 0.0F && videoAspectRatio != 0.0F) {
-      int width = Math.min(maxDisplayWidth, Math.round((float)maxDisplayHeight / minVisibleFraction * videoAspectRatio));
-      int height = Math.min(maxDisplayHeight, Math.round((float)maxDisplayWidth / minVisibleFraction / videoAspectRatio));
+      final int width = Math.min(maxDisplayWidth, Math.round(maxDisplayHeight / minVisibleFraction * videoAspectRatio));
+      final int height = Math.min(maxDisplayHeight, Math.round(maxDisplayWidth / minVisibleFraction / videoAspectRatio));
       return new Point(width, height);
     } else {
       return new Point(maxDisplayWidth, maxDisplayHeight);
@@ -120,9 +129,11 @@ public class RendererCommon {
       int maxWidth = View.getDefaultSize(Integer.MAX_VALUE, widthSpec);
       int maxHeight = View.getDefaultSize(Integer.MAX_VALUE, heightSpec);
       if (frameWidth != 0 && frameHeight != 0 && maxWidth != 0 && maxHeight != 0) {
-        float frameAspect = (float)frameWidth / (float)frameHeight;
-        float displayAspect = (float)maxWidth / (float)maxHeight;
-        float visibleFraction = frameAspect > 1.0F == displayAspect > 1.0F ? this.visibleFractionMatchOrientation : this.visibleFractionMismatchOrientation;
+        final float frameAspect = frameWidth / (float) frameHeight;
+        final float displayAspect = maxWidth / (float) maxHeight;
+        final float visibleFraction = (frameAspect > 1.0f) == (displayAspect > 1.0f)
+                ? visibleFractionMatchOrientation
+                : visibleFractionMismatchOrientation;
         Point layoutSize = RendererCommon.getDisplaySize(visibleFraction, frameAspect, maxWidth, maxHeight);
         if (MeasureSpec.getMode(widthSpec) == MeasureSpec.EXACTLY) {
           layoutSize.x = maxWidth;
@@ -140,11 +151,12 @@ public class RendererCommon {
   }
 
   public interface GlDrawer {
-    void drawOes(int var1, float[] var2, int var3, int var4, int var5, int var6, int var7, int var8);
-
-    void drawRgb(int var1, float[] var2, int var3, int var4, int var5, int var6, int var7, int var8);
-
-    void drawYuv(int[] var1, float[] var2, int var3, int var4, int var5, int var6, int var7, int var8);
+    void drawOes(int oesTextureId, float[] texMatrix, int frameWidth, int frameHeight,
+                 int viewportX, int viewportY, int viewportWidth, int viewportHeight);
+    void drawRgb(int textureId, float[] texMatrix, int frameWidth, int frameHeight, int viewportX,
+                 int viewportY, int viewportWidth, int viewportHeight);
+    void drawYuv(int[] yuvTextures, float[] texMatrix, int frameWidth, int frameHeight,
+                 int viewportX, int viewportY, int viewportWidth, int viewportHeight);
 
     void release();
   }
@@ -152,6 +164,6 @@ public class RendererCommon {
   public interface RendererEvents {
     void onFirstFrameRendered();
 
-    void onFrameResolutionChanged(int var1, int var2, int var3);
+    void onFrameResolutionChanged(int videoWidth, int videoHeight, int rotation);
   }
 }

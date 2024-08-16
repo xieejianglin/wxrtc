@@ -78,7 +78,7 @@ public class NetworkMonitor {
   
   @CalledByNative
   private void startMonitoring(@Nullable Context applicationContext, long nativeObserver, String fieldTrialsString) {
-    Logging.d("NetworkMonitor", "Start monitoring with native observer " + nativeObserver + " fieldTrialsString: " + fieldTrialsString);
+    Logging.d(TAG, "Start monitoring with native observer " + nativeObserver + " fieldTrialsString: " + fieldTrialsString);
     startMonitoring(
         (applicationContext != null) ? applicationContext : ContextUtils.getApplicationContext(), fieldTrialsString);
     synchronized (this.nativeNetworkObservers) {
@@ -99,7 +99,7 @@ public class NetworkMonitor {
   
   @CalledByNative
   private void stopMonitoring(long nativeObserver) {
-    Logging.d("NetworkMonitor", "Stop monitoring with native observer " + nativeObserver);
+    Logging.d(TAG, "Stop monitoring with native observer " + nativeObserver);
     stopMonitoring();
     synchronized (this.nativeNetworkObservers) {
       this.nativeNetworkObservers.remove(Long.valueOf(nativeObserver));

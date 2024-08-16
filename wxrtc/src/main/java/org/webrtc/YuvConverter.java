@@ -54,11 +54,11 @@ public final class YuvConverter {
   
   private final ThreadUtils.ThreadChecker threadChecker = new ThreadUtils.ThreadChecker();
   
-  private final GlTextureFrameBuffer i420TextureFrameBuffer = new GlTextureFrameBuffer(6408);
+  private final GlTextureFrameBuffer i420TextureFrameBuffer = new GlTextureFrameBuffer(GLES20.GL_RGBA);
   
   private final ShaderCallbacks shaderCallbacks = new ShaderCallbacks();
   
-  private final GlGenericDrawer drawer = new GlGenericDrawer("uniform vec2 xUnit;\nuniform vec4 coeffs;\n\nvoid main() {\n  gl_FragColor.r = coeffs.a + dot(coeffs.rgb,\n      sample(tc - 1.5 * xUnit).rgb);\n  gl_FragColor.g = coeffs.a + dot(coeffs.rgb,\n      sample(tc - 0.5 * xUnit).rgb);\n  gl_FragColor.b = coeffs.a + dot(coeffs.rgb,\n      sample(tc + 0.5 * xUnit).rgb);\n  gl_FragColor.a = coeffs.a + dot(coeffs.rgb,\n      sample(tc + 1.5 * xUnit).rgb);\n}\n", this.shaderCallbacks);
+  private final GlGenericDrawer drawer = new GlGenericDrawer(FRAGMENT_SHADER, this.shaderCallbacks);
   
   private final VideoFrameDrawer videoFrameDrawer;
   
@@ -76,7 +76,7 @@ public final class YuvConverter {
     try {
       return convertInternal(inputTextureBuffer);
     } catch (GLException e) {
-      Logging.w("YuvConverter", "Failed to convert TextureBuffer", (Throwable)e);
+      Logging.w(TAG, "Failed to convert TextureBuffer", (Throwable)e);
       return null;
     } 
   }
@@ -96,7 +96,7 @@ public final class YuvConverter {
     renderMatrix.preScale(1.0F, -1.0F);
     renderMatrix.preTranslate(-0.5F, -0.5F);
     this.i420TextureFrameBuffer.setSize(viewportWidth, totalHeight);
-    GLES20.glBindFramebuffer(36160, this.i420TextureFrameBuffer.getFrameBufferId());
+    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, this.i420TextureFrameBuffer.getFrameBufferId());
     GlUtil.checkNoGLES2Error("glBindFramebuffer");
     this.shaderCallbacks.setPlaneY();
     VideoFrameDrawer.drawTexture(this.drawer, preparedBuffer, renderMatrix, frameWidth, frameHeight, 0, 0, viewportWidth, frameHeight);
@@ -104,14 +104,14 @@ public final class YuvConverter {
     VideoFrameDrawer.drawTexture(this.drawer, preparedBuffer, renderMatrix, frameWidth, frameHeight, 0, frameHeight, viewportWidth / 2, uvHeight);
     this.shaderCallbacks.setPlaneV();
     VideoFrameDrawer.drawTexture(this.drawer, preparedBuffer, renderMatrix, frameWidth, frameHeight, viewportWidth / 2, frameHeight, viewportWidth / 2, uvHeight);
-    GLES20.glReadPixels(0, 0, this.i420TextureFrameBuffer.getWidth(), this.i420TextureFrameBuffer.getHeight(), 6408, 5121, i420ByteBuffer);
+    GLES20.glReadPixels(0, 0, this.i420TextureFrameBuffer.getWidth(), this.i420TextureFrameBuffer.getHeight(), GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, i420ByteBuffer);
     GlUtil.checkNoGLES2Error("YuvConverter.convert");
-    GLES20.glBindFramebuffer(36160, 0);
-    int yPos = 0;
-    int uPos = 0 + stride * frameHeight;
-    int vPos = uPos + stride / 2;
-    i420ByteBuffer.position(0);
-    i420ByteBuffer.limit(0 + stride * frameHeight);
+    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
+    final int yPos = 0;
+    final int uPos = yPos + stride * frameHeight;
+    final int vPos = uPos + stride / 2;
+    i420ByteBuffer.position(yPos);
+    i420ByteBuffer.limit(yPos + stride * frameHeight);
     ByteBuffer dataY = i420ByteBuffer.slice();
     i420ByteBuffer.position(uPos);
     int uvSize = stride * (uvHeight - 1) + stride / 2;

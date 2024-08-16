@@ -46,11 +46,11 @@ class EglBase14Impl implements EglBase14 {
     private final RefCountDelegate refCountDelegate;
     
     public EglConnection(EGLContext sharedContext, int[] configAttributes) {
-      this.eglDisplay = EglBase14Impl.getEglDisplay();
-      this.eglConfig = EglBase14Impl.getEglConfig(this.eglDisplay, configAttributes);
+      this.eglDisplay = getEglDisplay();
+      this.eglConfig = getEglConfig(this.eglDisplay, configAttributes);
       int openGlesVersion = EglBase.getOpenGlesVersionFromConfig(configAttributes);
-      Logging.d("EglBase14Impl", "Using OpenGL ES version " + openGlesVersion);
-      this.eglContext = EglBase14Impl.createEglContext(sharedContext, this.eglDisplay, this.eglConfig, openGlesVersion);
+      Logging.d(TAG, "Using OpenGL ES version " + openGlesVersion);
+      this.eglContext = createEglContext(sharedContext, this.eglDisplay, this.eglConfig, openGlesVersion);
       this.refCountDelegate = new RefCountDelegate(() -> {
             synchronized (EglBase.lock) {
               EGL14.eglMakeCurrent(this.eglDisplay, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_SURFACE, EGL14.EGL_NO_CONTEXT);
@@ -65,9 +65,7 @@ class EglBase14Impl implements EglBase14 {
       this.eglContext = EGL14.EGL_NO_CONTEXT;
       this.eglDisplay = EGL14.EGL_NO_DISPLAY;
       this.eglConfig = null;
-      this.refCountDelegate = new RefCountDelegate(() -> {
-          
-          });
+      this.refCountDelegate = new RefCountDelegate(() -> {});
     }
     
     public void retain() {
@@ -114,7 +112,7 @@ class EglBase14Impl implements EglBase14 {
     checkIsNotReleased();
     if (this.eglSurface != EGL14.EGL_NO_SURFACE)
       throw new RuntimeException("Already has an EGLSurface"); 
-    int[] surfaceAttribs = { 12344 };
+    int[] surfaceAttribs = { EGL14.EGL_NONE };
     this.eglSurface = EGL14.eglCreateWindowSurface(this.eglConnection
         .getDisplay(), this.eglConnection.getConfig(), surface, surfaceAttribs, 0);
     if (this.eglSurface == EGL14.EGL_NO_SURFACE)
@@ -130,12 +128,11 @@ class EglBase14Impl implements EglBase14 {
     checkIsNotReleased();
     if (this.eglSurface != EGL14.EGL_NO_SURFACE)
       throw new RuntimeException("Already has an EGLSurface"); 
-    int[] surfaceAttribs = { 12375, width, 12374, height, 12344 };
+    int[] surfaceAttribs = { EGL14.EGL_WIDTH, width, EGL14.EGL_HEIGHT, height, EGL14.EGL_NONE };
     this.eglSurface = EGL14.eglCreatePbufferSurface(this.eglConnection
         .getDisplay(), this.eglConnection.getConfig(), surfaceAttribs, 0);
     if (this.eglSurface == EGL14.EGL_NO_SURFACE)
-      throw new GLException(EGL14.eglGetError(), "Failed to create pixel buffer surface with size " + width + "x" + height + ": 0x" + 
-          
+      throw new GLException(EGL14.eglGetError(), "Failed to create pixel buffer surface with size " + width + "x" + height + ": 0x" +
           Integer.toHexString(EGL14.eglGetError())); 
   }
   
@@ -149,13 +146,13 @@ class EglBase14Impl implements EglBase14 {
   
   public int surfaceWidth() {
     int[] widthArray = new int[1];
-    EGL14.eglQuerySurface(this.eglConnection.getDisplay(), this.eglSurface, 12375, widthArray, 0);
+    EGL14.eglQuerySurface(this.eglConnection.getDisplay(), this.eglSurface, EGL14.EGL_WIDTH, widthArray, 0);
     return widthArray[0];
   }
   
   public int surfaceHeight() {
     int[] heightArray = new int[1];
-    EGL14.eglQuerySurface(this.eglConnection.getDisplay(), this.eglSurface, 12374, heightArray, 0);
+    EGL14.eglQuerySurface(this.eglConnection.getDisplay(), this.eglSurface, EGL14.EGL_HEIGHT, heightArray, 0);
     return heightArray[0];
   }
   
@@ -183,8 +180,7 @@ class EglBase14Impl implements EglBase14 {
     if (this.eglSurface == EGL14.EGL_NO_SURFACE)
       throw new RuntimeException("No EGLSurface - can't make current"); 
     synchronized (EglBase.lock) {
-      if (!EGL14.eglMakeCurrent(this.eglConnection
-          .getDisplay(), this.eglSurface, this.eglSurface, this.eglConnection.getContext()))
+      if (!EGL14.eglMakeCurrent(this.eglConnection.getDisplay(), this.eglSurface, this.eglSurface, this.eglConnection.getContext()))
         throw new GLException(EGL14.eglGetError(), "eglMakeCurrent failed: 0x" + 
             Integer.toHexString(EGL14.eglGetError())); 
     } 
@@ -247,7 +243,7 @@ class EglBase14Impl implements EglBase14 {
     EGLContext eglContext;
     if (sharedContext != null && sharedContext == EGL14.EGL_NO_CONTEXT)
       throw new RuntimeException("Invalid sharedContext"); 
-    int[] contextAttributes = { 12440, openGlesVersion, 12344 };
+    int[] contextAttributes = { EGL14.EGL_CONTEXT_CLIENT_VERSION, openGlesVersion, EGL14.EGL_NONE };
     EGLContext rootContext = (sharedContext == null) ? EGL14.EGL_NO_CONTEXT : sharedContext;
     synchronized (EglBase.lock) {
       eglContext = EGL14.eglCreateContext(eglDisplay, eglConfig, rootContext, contextAttributes, 0);

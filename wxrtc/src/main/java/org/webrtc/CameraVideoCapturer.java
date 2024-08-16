@@ -42,12 +42,12 @@ public interface CameraVideoCapturer extends VideoCapturer {
     
     private final Runnable cameraObserver = new Runnable() {
         public void run() {
-          int cameraFps = Math.round(CameraVideoCapturer.CameraStatistics.this.frameCount * 1000.0F / 2000.0F);
-          Logging.d("CameraStatistics", "Camera fps: " + cameraFps + ".");
+          int cameraFps = Math.round(CameraVideoCapturer.CameraStatistics.this.frameCount * 1000.0F / CAMERA_OBSERVER_PERIOD_MS);
+          Logging.d(TAG, "Camera fps: " + cameraFps + ".");
           if (CameraVideoCapturer.CameraStatistics.this.frameCount == 0) {
             CameraVideoCapturer.CameraStatistics.this.freezePeriodCount++;
-            if (2000 * CameraVideoCapturer.CameraStatistics.this.freezePeriodCount >= 4000 && CameraVideoCapturer.CameraStatistics.this.eventsHandler != null) {
-              Logging.e("CameraStatistics", "Camera freezed.");
+            if (CAMERA_OBSERVER_PERIOD_MS * CameraVideoCapturer.CameraStatistics.this.freezePeriodCount >= CAMERA_FREEZE_REPORT_TIMOUT_MS && CameraVideoCapturer.CameraStatistics.this.eventsHandler != null) {
+              Logging.e(TAG, "Camera freezed.");
               if (CameraVideoCapturer.CameraStatistics.this.surfaceTextureHelper.isTextureInUse()) {
                 CameraVideoCapturer.CameraStatistics.this.eventsHandler.onCameraFreezed("Camera failure. Client must return video buffers.");
               } else {

@@ -15,9 +15,9 @@ public class GlTextureFrameBuffer {
   
   public GlTextureFrameBuffer(int pixelFormat) {
     switch (pixelFormat) {
-      case 6407:
-      case 6408:
-      case 6409:
+      case GLES20.GL_RGB:
+      case GLES20.GL_RGBA:
+      case GLES20.GL_LUMINANCE:
         this.pixelFormat = pixelFormat;
         break;
       default:
@@ -35,23 +35,23 @@ public class GlTextureFrameBuffer {
     this.width = width;
     this.height = height;
     if (this.textureId == 0)
-      this.textureId = GlUtil.generateTexture(3553); 
+      this.textureId = GlUtil.generateTexture(GLES20.GL_TEXTURE_2D);
     if (this.frameBufferId == 0) {
       int[] frameBuffers = new int[1];
       GLES20.glGenFramebuffers(1, frameBuffers, 0);
       this.frameBufferId = frameBuffers[0];
     } 
-    GLES20.glActiveTexture(33984);
-    GLES20.glBindTexture(3553, this.textureId);
-    GLES20.glTexImage2D(3553, 0, this.pixelFormat, width, height, 0, this.pixelFormat, 5121, null);
-    GLES20.glBindTexture(3553, 0);
+    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, this.textureId);
+    GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, this.pixelFormat, width, height, 0, this.pixelFormat, GLES20.GL_UNSIGNED_BYTE, null);
+    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     GlUtil.checkNoGLES2Error("GlTextureFrameBuffer setSize");
-    GLES20.glBindFramebuffer(36160, this.frameBufferId);
-    GLES20.glFramebufferTexture2D(36160, 36064, 3553, this.textureId, 0);
-    int status = GLES20.glCheckFramebufferStatus(36160);
-    if (status != 36053)
+    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, this.frameBufferId);
+    GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, this.textureId, 0);
+    int status = GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
+    if (status != GLES20.GL_FRAMEBUFFER_COMPLETE)
       throw new IllegalStateException("Framebuffer not complete, status: " + status); 
-    GLES20.glBindFramebuffer(36160, 0);
+    GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0);
   }
   
   public int getWidth() {

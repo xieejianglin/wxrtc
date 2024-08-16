@@ -12,7 +12,7 @@ public class SoftwareVideoDecoderFactory implements VideoDecoderFactory {
   public VideoDecoder createDecoder(VideoCodecInfo info) {
     final long nativeDecoder = nativeCreateDecoder(this.nativeFactory, info);
     if (nativeDecoder == 0L) {
-      Logging.w("SoftwareVideoDecoderFactory", "Trying to create decoder for unsupported format. " + info);
+      Logging.w(TAG, "Trying to create decoder for unsupported format. " + info);
       return null;
     } 
     return new WrappedNativeVideoDecoder() {

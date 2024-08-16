@@ -20,7 +20,7 @@ public class SurfaceTextureHelper {
             try {
               return new SurfaceTextureHelper(sharedContext, handler, alignTimestamps, yuvConverter, frameRefMonitor);
             } catch (RuntimeException e) {
-              Logging.e("SurfaceTextureHelper", threadName + " create failure", e);
+              Logging.e(TAG, threadName + " create failure", e);
               return null;
             } 
           }
@@ -102,7 +102,7 @@ public class SurfaceTextureHelper {
   
   final Runnable setListenerRunnable = new Runnable() {
       public void run() {
-        Logging.d("SurfaceTextureHelper", "Setting listener to " + SurfaceTextureHelper.this.pendingListener);
+        Logging.d(TAG, "Setting listener to " + SurfaceTextureHelper.this.pendingListener);
         SurfaceTextureHelper.this.listener = SurfaceTextureHelper.this.pendingListener;
         SurfaceTextureHelper.this.pendingListener = null;
         if (SurfaceTextureHelper.this.hasPendingTexture) {
@@ -132,7 +132,7 @@ public class SurfaceTextureHelper {
     this.surfaceTexture = new SurfaceTexture(this.oesTextureId);
     this.surfaceTexture.setOnFrameAvailableListener(st -> {
       if (this.hasPendingTexture)
-        Logging.d("SurfaceTextureHelper", "A frame is already pending, dropping frame.");
+        Logging.d(TAG, "A frame is already pending, dropping frame.");
       this.hasPendingTexture = true;
       tryDeliverTextureFrame();
     }, handler);
@@ -146,7 +146,7 @@ public class SurfaceTextureHelper {
   }
   
   public void stopListening() {
-    Logging.d("SurfaceTextureHelper", "stopListening()");
+    Logging.d(TAG, "stopListening()");
     this.handler.removeCallbacks(this.setListenerRunnable);
     ThreadUtils.invokeAtFrontUninterruptibly(this.handler, () -> {
           this.listener = null;
@@ -202,7 +202,7 @@ public class SurfaceTextureHelper {
   }
   
   public void dispose() {
-    Logging.d("SurfaceTextureHelper", "dispose()");
+    Logging.d(TAG, "dispose()");
     ThreadUtils.invokeAtFrontUninterruptibly(this.handler, () -> {
           this.isQuitting = true;
           if (!this.isTextureInUse)
@@ -227,7 +227,7 @@ public class SurfaceTextureHelper {
     if (this.isQuitting || !this.hasPendingTexture || this.isTextureInUse || this.listener == null)
       return; 
     if (this.textureWidth == 0 || this.textureHeight == 0) {
-      Logging.w("SurfaceTextureHelper", "Texture size has not been set.");
+      Logging.w(TAG, "Texture size has not been set.");
       return;
     } 
     this.isTextureInUse = true;

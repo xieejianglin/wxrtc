@@ -59,6 +59,7 @@ import org.webrtc.VideoEncoderFactory
 import org.webrtc.VideoFrame
 import org.webrtc.VideoProcessor
 import org.webrtc.VideoProcessor.FrameAdaptationParameters
+import org.webrtc.VideoProcessor.applyFrameAdaptationParameters
 import org.webrtc.VideoSink
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
@@ -1180,7 +1181,10 @@ internal class PeerConnectionClient(
 
         videoSource?.setVideoProcessor(object : VideoProcessor {
             override fun onFrameCaptured(frame: VideoFrame, parameters: FrameAdaptationParameters) {
-//                VideoFrame adaptedFrame = applyFrameAdaptationParameters(frame, parameters);
+//                applyFrameAdaptationParameters(frame, parameters)?.let {
+//                    this.onFrameCaptured(it)
+//                    it.release()
+//                }
                 this.onFrameCaptured(frame)
             }
 

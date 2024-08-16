@@ -6,17 +6,17 @@ public class YuvHelper {
   public static void I420Copy(ByteBuffer srcY, int srcStrideY, ByteBuffer srcU, int srcStrideU, ByteBuffer srcV, int srcStrideV, ByteBuffer dst, int dstWidth, int dstHeight, int dstStrideY, int dstSliceHeightY, int dstStrideU, int dstSliceHeightU) {
     int chromaWidth = (dstWidth + 1) / 2;
     int chromaHeight = (dstHeight + 1) / 2;
-    int dstStartY = 0;
-    int dstEndY = 0 + dstStrideY * dstHeight;
-    int dstStartU = 0 + dstStrideY * dstSliceHeightY;
-    int dstEndU = dstStartU + dstStrideU * chromaHeight;
-    int dstStartV = dstStartU + dstStrideU * dstSliceHeightU;
-    int dstEndV = dstStartV + dstStrideU * (chromaHeight - 1) + chromaWidth;
-    if (dst.capacity() < dstEndV)
-      throw new IllegalArgumentException("Expected destination buffer capacity to be at least " + dstEndV + " was " + dst
-          .capacity()); 
+    final int dstStartY = 0;
+    final int dstEndY = dstStartY + dstStrideY * dstHeight;
+    final int dstStartU = dstStartY + dstStrideY * dstSliceHeightY;
+    final int dstEndU = dstStartU + dstStrideU * chromaHeight;
+    final int dstStartV = dstStartU + dstStrideU * dstSliceHeightU;
+    final int dstEndV = dstStartV + dstStrideU * (chromaHeight - 1) + chromaWidth;
+    if (dst.capacity() < dstEndV) {
+        throw new IllegalArgumentException("Expected destination buffer capacity to be at least " + dstEndV + " was " + dst.capacity());
+    }
     dst.limit(dstEndY);
-    dst.position(0);
+    dst.position(dstStartY);
     ByteBuffer dstY = dst.slice();
     dst.limit(dstEndU);
     dst.position(dstStartU);
@@ -38,15 +38,15 @@ public class YuvHelper {
   public static void I420ToNV12(ByteBuffer srcY, int srcStrideY, ByteBuffer srcU, int srcStrideU, ByteBuffer srcV, int srcStrideV, ByteBuffer dst, int dstWidth, int dstHeight, int dstStrideY, int dstSliceHeightY) {
     int chromaHeight = (dstHeight + 1) / 2;
     int chromaWidth = (dstWidth + 1) / 2;
-    int dstStartY = 0;
-    int dstEndY = 0 + dstStrideY * dstHeight;
-    int dstStartUV = 0 + dstStrideY * dstSliceHeightY;
-    int dstEndUV = dstStartUV + chromaWidth * chromaHeight * 2;
+    final int dstStartY = 0;
+    final int dstEndY = dstStartY + dstStrideY * dstHeight;
+    final int dstStartUV = dstStartY + dstStrideY * dstSliceHeightY;
+    final int dstEndUV = dstStartUV + chromaWidth * chromaHeight * 2;
     if (dst.capacity() < dstEndUV)
       throw new IllegalArgumentException("Expected destination buffer capacity to be at least " + dstEndUV + " was " + dst
           .capacity()); 
     dst.limit(dstEndY);
-    dst.position(0);
+    dst.position(dstStartY);
     ByteBuffer dstY = dst.slice();
     dst.limit(dstEndUV);
     dst.position(dstStartUV);
@@ -69,12 +69,11 @@ public class YuvHelper {
     int dstChromaWidth = (dstWidth + 1) / 2;
     int minSize = dstWidth * dstHeight + dstChromaWidth * dstChromaHeight * 2;
     if (dst.capacity() < minSize)
-      throw new IllegalArgumentException("Expected destination buffer capacity to be at least " + minSize + " was " + dst
-          .capacity()); 
-    int startY = 0;
-    int startU = dstHeight * dstWidth;
-    int startV = startU + dstChromaHeight * dstChromaWidth;
-    dst.position(0);
+      throw new IllegalArgumentException("Expected destination buffer capacity to be at least " + minSize + " was " + dst.capacity());
+    final int startY = 0;
+    final int startU = dstHeight * dstWidth;
+    final int startV = startU + dstChromaHeight * dstChromaWidth;
+    dst.position(startY);
     ByteBuffer dstY = dst.slice();
     dst.position(startU);
     ByteBuffer dstU = dst.slice();
@@ -131,14 +130,20 @@ public class YuvHelper {
       throw new NullPointerException(description + " should not be null"); 
     return obj;
   }
-  
-  private static native void nativeCopyPlane(ByteBuffer paramByteBuffer1, int paramInt1, ByteBuffer paramByteBuffer2, int paramInt2, int paramInt3, int paramInt4);
-  
-  private static native void nativeI420Copy(ByteBuffer paramByteBuffer1, int paramInt1, ByteBuffer paramByteBuffer2, int paramInt2, ByteBuffer paramByteBuffer3, int paramInt3, ByteBuffer paramByteBuffer4, int paramInt4, ByteBuffer paramByteBuffer5, int paramInt5, ByteBuffer paramByteBuffer6, int paramInt6, int paramInt7, int paramInt8);
-  
-  private static native void nativeI420ToNV12(ByteBuffer paramByteBuffer1, int paramInt1, ByteBuffer paramByteBuffer2, int paramInt2, ByteBuffer paramByteBuffer3, int paramInt3, ByteBuffer paramByteBuffer4, int paramInt4, ByteBuffer paramByteBuffer5, int paramInt5, int paramInt6, int paramInt7);
-  
-  private static native void nativeI420Rotate(ByteBuffer paramByteBuffer1, int paramInt1, ByteBuffer paramByteBuffer2, int paramInt2, ByteBuffer paramByteBuffer3, int paramInt3, ByteBuffer paramByteBuffer4, int paramInt4, ByteBuffer paramByteBuffer5, int paramInt5, ByteBuffer paramByteBuffer6, int paramInt6, int paramInt7, int paramInt8, int paramInt9);
-  
-  private static native void nativeABGRToI420(ByteBuffer paramByteBuffer1, int paramInt1, ByteBuffer paramByteBuffer2, int paramInt2, ByteBuffer paramByteBuffer3, int paramInt3, ByteBuffer paramByteBuffer4, int paramInt4, int paramInt5, int paramInt6);
+
+  private static native void nativeCopyPlane(
+          ByteBuffer src, int srcStride, ByteBuffer dst, int dstStride, int width, int height);
+  private static native void nativeI420Copy(ByteBuffer srcY, int srcStrideY, ByteBuffer srcU,
+                                            int srcStrideU, ByteBuffer srcV, int srcStrideV, ByteBuffer dstY, int dstStrideY,
+                                            ByteBuffer dstU, int dstStrideU, ByteBuffer dstV, int dstStrideV, int width, int height);
+  private static native void nativeI420ToNV12(ByteBuffer srcY, int srcStrideY, ByteBuffer srcU,
+                                              int srcStrideU, ByteBuffer srcV, int srcStrideV, ByteBuffer dstY, int dstStrideY,
+                                              ByteBuffer dstUV, int dstStrideUV, int width, int height);
+  private static native void nativeI420Rotate(ByteBuffer srcY, int srcStrideY, ByteBuffer srcU,
+                                              int srcStrideU, ByteBuffer srcV, int srcStrideV, ByteBuffer dstY, int dstStrideY,
+                                              ByteBuffer dstU, int dstStrideU, ByteBuffer dstV, int dstStrideV, int srcWidth, int srcHeight,
+                                              int rotationMode);
+  private static native void nativeABGRToI420(ByteBuffer src, int srcStride, ByteBuffer dstY,
+                                              int dstStrideY, ByteBuffer dstU, int dstStrideU, ByteBuffer dstV, int dstStrideV, int width,
+                                              int height);
 }

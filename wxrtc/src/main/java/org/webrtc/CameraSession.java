@@ -1,7 +1,11 @@
 package org.webrtc;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Matrix;
+import android.os.Build;
+import android.view.Display;
+import android.view.Surface;
 import android.view.WindowManager;
 
 interface CameraSession {
@@ -36,18 +40,21 @@ interface CameraSession {
   public enum FailureType {
     ERROR, DISCONNECTED;
   }
-  
+
   static int getDeviceOrientation(Context context) {
-    WindowManager wm = (WindowManager)context.getSystemService("window");
-    switch (wm.getDefaultDisplay().getRotation()) {
-      case 1:
+    WindowManager wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
+    int rotation = wm.getDefaultDisplay().getRotation();
+
+    switch (rotation) {
+      case Surface.ROTATION_90:
         return 90;
-      case 2:
+      case Surface.ROTATION_180:
         return 180;
-      case 3:
+      case Surface.ROTATION_270:
         return 270;
-    } 
-    return 0;
+      default:
+        return Surface.ROTATION_0;
+    }
   }
   
   static VideoFrame.TextureBuffer createTextureBufferWithModifiedTransformMatrix(TextureBufferImpl buffer, boolean mirror, int rotation) {

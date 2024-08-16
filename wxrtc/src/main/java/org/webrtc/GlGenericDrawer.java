@@ -1,5 +1,6 @@
 package org.webrtc;
 
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import androidx.annotation.Nullable;
 import java.nio.FloatBuffer;
@@ -67,7 +68,7 @@ class GlGenericDrawer implements RendererCommon.GlDrawer {
   }
   
   public GlGenericDrawer(String genericFragmentSource, ShaderCallbacks shaderCallbacks) {
-    this("varying vec2 tc;\nattribute vec4 in_pos;\nattribute vec4 in_tc;\nuniform mat4 tex_mat;\nvoid main() {\n  gl_Position = in_pos;\n  tc = (tex_mat * in_tc).xy;\n}\n", genericFragmentSource, shaderCallbacks);
+    this(DEFAULT_VERTEX_SHADER_STRING, genericFragmentSource, shaderCallbacks);
   }
   
   public GlGenericDrawer(String vertexShader, String genericFragmentSource, ShaderCallbacks shaderCallbacks) {
@@ -83,34 +84,34 @@ class GlGenericDrawer implements RendererCommon.GlDrawer {
   
   public void drawOes(int oesTextureId, float[] texMatrix, int frameWidth, int frameHeight, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
     prepareShader(ShaderType.OES, texMatrix, frameWidth, frameHeight, viewportWidth, viewportHeight);
-    GLES20.glActiveTexture(33984);
-    GLES20.glBindTexture(36197, oesTextureId);
+    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+    GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTextureId);
     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-    GLES20.glDrawArrays(5, 0, 4);
-    GLES20.glBindTexture(36197, 0);
+    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+    GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, 0);
   }
   
   public void drawRgb(int textureId, float[] texMatrix, int frameWidth, int frameHeight, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
     prepareShader(ShaderType.RGB, texMatrix, frameWidth, frameHeight, viewportWidth, viewportHeight);
-    GLES20.glActiveTexture(33984);
-    GLES20.glBindTexture(3553, textureId);
+    GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId);
     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-    GLES20.glDrawArrays(5, 0, 4);
-    GLES20.glBindTexture(3553, 0);
+    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+    GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
   }
   
   public void drawYuv(int[] yuvTextures, float[] texMatrix, int frameWidth, int frameHeight, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
     prepareShader(ShaderType.YUV, texMatrix, frameWidth, frameHeight, viewportWidth, viewportHeight);
     int i;
     for (i = 0; i < 3; i++) {
-      GLES20.glActiveTexture(33984 + i);
-      GLES20.glBindTexture(3553, yuvTextures[i]);
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
+      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, yuvTextures[i]);
     } 
     GLES20.glViewport(viewportX, viewportY, viewportWidth, viewportHeight);
-    GLES20.glDrawArrays(5, 0, 4);
+    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
     for (i = 0; i < 3; i++) {
-      GLES20.glActiveTexture(33984 + i);
-      GLES20.glBindTexture(3553, 0);
+      GLES20.glActiveTexture(GLES20.GL_TEXTURE0 + i);
+      GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
     } 
   }
   
@@ -137,15 +138,15 @@ class GlGenericDrawer implements RendererCommon.GlDrawer {
       } 
       GlUtil.checkNoGLES2Error("Create shader");
       this.shaderCallbacks.onNewShader(shader);
-      this.texMatrixLocation = shader.getUniformLocation("tex_mat");
-      this.inPosLocation = shader.getAttribLocation("in_pos");
-      this.inTcLocation = shader.getAttribLocation("in_tc");
+      this.texMatrixLocation = shader.getUniformLocation(TEXTURE_MATRIX_NAME);
+      this.inPosLocation = shader.getAttribLocation(INPUT_VERTEX_COORDINATE_NAME);
+      this.inTcLocation = shader.getAttribLocation(INPUT_TEXTURE_COORDINATE_NAME);
     } 
     shader.useProgram();
     GLES20.glEnableVertexAttribArray(this.inPosLocation);
-    GLES20.glVertexAttribPointer(this.inPosLocation, 2, 5126, false, 0, FULL_RECTANGLE_BUFFER);
+    GLES20.glVertexAttribPointer(this.inPosLocation, 2, GLES20.GL_FLOAT, false, 0, FULL_RECTANGLE_BUFFER);
     GLES20.glEnableVertexAttribArray(this.inTcLocation);
-    GLES20.glVertexAttribPointer(this.inTcLocation, 2, 5126, false, 0, FULL_RECTANGLE_TEXTURE_BUFFER);
+    GLES20.glVertexAttribPointer(this.inTcLocation, 2, GLES20.GL_FLOAT, false, 0, FULL_RECTANGLE_TEXTURE_BUFFER);
     GLES20.glUniformMatrix4fv(this.texMatrixLocation, 1, false, texMatrix, 0);
     this.shaderCallbacks.onPrepareShader(shader, texMatrix, frameWidth, frameHeight, viewportWidth, viewportHeight);
     GlUtil.checkNoGLES2Error("Prepare shader");
@@ -160,8 +161,8 @@ class GlGenericDrawer implements RendererCommon.GlDrawer {
   }
   
   public static interface ShaderCallbacks {
-    void onNewShader(GlShader param1GlShader);
+    void onNewShader(GlShader shader);
     
-    void onPrepareShader(GlShader param1GlShader, float[] param1ArrayOffloat, int param1Int1, int param1Int2, int param1Int3, int param1Int4);
+    void onPrepareShader(GlShader shader, float[] texMatrix, int frameWidth, int frameHeight, int viewportWidth, int viewportHeight);
   }
 }

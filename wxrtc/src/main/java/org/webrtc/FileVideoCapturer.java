@@ -29,7 +29,7 @@ public class FileVideoCapturer implements VideoCapturer {
     
     private static final String Y4M_FRAME_DELIMETER = "FRAME";
     
-    private static final int FRAME_DELIMETER_LENGTH = "FRAME".length() + 1;
+    private static final int FRAME_DELIMETER_LENGTH = Y4M_FRAME_DELIMETER.length() + 1;
     
     private final int frameWidth;
     
@@ -73,14 +73,14 @@ public class FileVideoCapturer implements VideoCapturer {
             break;
         } 
       } 
-      Logging.d("VideoReaderY4M", "Color space: " + colorSpace);
+      Logging.d(TAG, "Color space: " + colorSpace);
       if (!colorSpace.equals("420") && !colorSpace.equals("420mpeg2"))
         throw new IllegalArgumentException("Does not support any other color space than I420 or I420mpeg2"); 
       if (w % 2 == 1 || h % 2 == 1)
         throw new IllegalArgumentException("Does not support odd width or height"); 
       this.frameWidth = w;
       this.frameHeight = h;
-      Logging.d("VideoReaderY4M", "frame dim: (" + w + ", " + h + ")");
+      Logging.d(TAG, "frame dim: (" + w + ", " + h + ")");
     }
     
     public VideoFrame getNextFrame() {
@@ -116,7 +116,7 @@ public class FileVideoCapturer implements VideoCapturer {
       try {
         this.mediaFile.close();
       } catch (IOException e) {
-        Logging.e("VideoReaderY4M", "Problem closing file", e);
+        Logging.e(TAG, "Problem closing file", e);
       } 
     }
   }
@@ -133,7 +133,7 @@ public class FileVideoCapturer implements VideoCapturer {
     try {
       this.videoReader = new VideoReaderY4M(inputFile);
     } catch (IOException e) {
-      Logging.d("FileVideoCapturer", "Could not open video file: " + inputFile);
+      Logging.d(TAG, "Could not open video file: " + inputFile);
       throw e;
     } 
   }

@@ -16,17 +16,17 @@ class H264Utils {
   
   public static final String H264_LEVEL_3_1 = "1f";
   
-  public static final String H264_CONSTRAINED_HIGH_3_1 = "640c1f";
+  public static final String H264_CONSTRAINED_HIGH_3_1 = H264_PROFILE_CONSTRAINED_HIGH + H264_LEVEL_3_1;
   
-  public static final String H264_CONSTRAINED_BASELINE_3_1 = "42e01f";
+  public static final String H264_CONSTRAINED_BASELINE_3_1 = H264_PROFILE_CONSTRAINED_BASELINE + H264_LEVEL_3_1;
   
   public static Map<String, String> getDefaultH264Params(boolean isHighProfile) {
     Map<String, String> params = new HashMap<>();
-    params.put("level-asymmetry-allowed", "1");
-    params.put("packetization-mode", "1");
-    params.put("profile-level-id", 
-        isHighProfile ? "640c1f" : 
-        "42e01f");
+    params.put(H264_FMTP_LEVEL_ASYMMETRY_ALLOWED, "1");
+    params.put(H264_FMTP_PACKETIZATION_MODE, "1");
+    params.put(H264_FMTP_PROFILE_LEVEL_ID,
+        isHighProfile ? H264_CONSTRAINED_HIGH_3_1 :
+                H264_CONSTRAINED_BASELINE_3_1);
     return params;
   }
   

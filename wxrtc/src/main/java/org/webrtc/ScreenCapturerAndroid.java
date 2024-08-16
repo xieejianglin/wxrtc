@@ -64,7 +64,7 @@ public class ScreenCapturerAndroid implements VideoCapturer, VideoSink {
     if (surfaceTextureHelper == null)
       throw new RuntimeException("surfaceTextureHelper not set."); 
     this.surfaceTextureHelper = surfaceTextureHelper;
-    this.mediaProjectionManager = (MediaProjectionManager)applicationContext.getSystemService("media_projection");
+    this.mediaProjectionManager = (MediaProjectionManager)applicationContext.getSystemService(Context.MEDIA_PROJECTION_SERVICE);
   }
   
   public synchronized void startCapture(int width, int height, int ignoredFramerate) {
@@ -113,10 +113,10 @@ public class ScreenCapturerAndroid implements VideoCapturer, VideoSink {
   
   private void updateVirtualDisplay() {
     this.surfaceTextureHelper.setTextureSize(this.width, this.height);
-    if (this.virtualDisplay == null || Build.VERSION.SDK_INT < 31) {
+    if (this.virtualDisplay == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
       createVirtualDisplay();
     } else {
-      this.virtualDisplay.resize(this.width, this.height, 400);
+      this.virtualDisplay.resize(this.width, this.height, VIRTUAL_DISPLAY_DPI);
       this.virtualDisplay.setSurface(new Surface(this.surfaceTextureHelper.getSurfaceTexture()));
     } 
   }
@@ -124,7 +124,7 @@ public class ScreenCapturerAndroid implements VideoCapturer, VideoSink {
   private void createVirtualDisplay() {
     if (this.virtualDisplay != null)
       this.virtualDisplay.release(); 
-    this.virtualDisplay = this.mediaProjection.createVirtualDisplay("WebRTC_ScreenCapture", this.width, this.height, 400, 3, new Surface(this.surfaceTextureHelper
+    this.virtualDisplay = this.mediaProjection.createVirtualDisplay("WebRTC_ScreenCapture", this.width, this.height, VIRTUAL_DISPLAY_DPI, DISPLAY_FLAGS, new Surface(this.surfaceTextureHelper
           .getSurfaceTexture()), null, null);
   }
   

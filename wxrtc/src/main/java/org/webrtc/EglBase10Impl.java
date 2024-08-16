@@ -16,7 +16,7 @@ import javax.microedition.khronos.egl.EGLSurface;
 class EglBase10Impl implements EglBase10 {
   private static final String TAG = "EglBase10Impl";
   
-  private static final int EGL_CONTEXT_CLIENT_VERSION = 12440;
+  private static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
   
   private static final EglConnection EGL_NO_CONNECTION = new EglConnection();
   
@@ -38,18 +38,17 @@ class EglBase10Impl implements EglBase10 {
     public long getNativeEglContext() {
       EGLContext previousContext = this.egl.eglGetCurrentContext();
       EGLDisplay currentDisplay = this.egl.eglGetCurrentDisplay();
-      EGLSurface previousDrawSurface = this.egl.eglGetCurrentSurface(12377);
-      EGLSurface previousReadSurface = this.egl.eglGetCurrentSurface(12378);
+      EGLSurface previousDrawSurface = this.egl.eglGetCurrentSurface(EGL10.EGL_DRAW);
+      EGLSurface previousReadSurface = this.egl.eglGetCurrentSurface(EGL10.EGL_READ);
       EGLSurface tempEglSurface = null;
       if (currentDisplay == EGL10.EGL_NO_DISPLAY)
         currentDisplay = this.egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY); 
       try {
         if (previousContext != this.eglContext) {
-          int[] surfaceAttribs = { 12375, 1, 12374, 1, 12344 };
+          int[] surfaceAttribs = { EGL10.EGL_WIDTH, 1, EGL10.EGL_HEIGHT, 1, EGL10.EGL_NONE };
           tempEglSurface = this.egl.eglCreatePbufferSurface(currentDisplay, this.eglContextConfig, surfaceAttribs);
           if (!this.egl.eglMakeCurrent(currentDisplay, tempEglSurface, tempEglSurface, this.eglContext))
-            throw new GLException(this.egl.eglGetError(), "Failed to make temporary EGL surface active: " + this.egl
-                .eglGetError()); 
+            throw new GLException(this.egl.eglGetError(), "Failed to make temporary EGL surface active: " + this.egl.eglGetError());
         } 
         return EglBase10Impl.nativeGetCurrentNativeEGLContext();
       } finally {
@@ -80,11 +79,11 @@ class EglBase10Impl implements EglBase10 {
     
     public EglConnection(EGLContext sharedContext, int[] configAttributes) {
       this.egl = (EGL10)EGLContext.getEGL();
-      this.eglDisplay = EglBase10Impl.getEglDisplay(this.egl);
-      this.eglConfig = EglBase10Impl.getEglConfig(this.egl, this.eglDisplay, configAttributes);
+      this.eglDisplay = getEglDisplay(this.egl);
+      this.eglConfig = getEglConfig(this.egl, this.eglDisplay, configAttributes);
       int openGlesVersion = EglBase.getOpenGlesVersionFromConfig(configAttributes);
-      Logging.d("EglBase10Impl", "Using OpenGL ES version " + openGlesVersion);
-      this.eglContext = EglBase10Impl.createEglContext(this.egl, sharedContext, this.eglDisplay, this.eglConfig, openGlesVersion);
+      Logging.d(TAG, "Using OpenGL ES version " + openGlesVersion);
+      this.eglContext = createEglContext(this.egl, sharedContext, this.eglDisplay, this.eglConfig, openGlesVersion);
       this.refCountDelegate = new RefCountDelegate(() -> {
             synchronized (EglBase.lock) {
               this.egl.eglMakeCurrent(this.eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
@@ -99,9 +98,7 @@ class EglBase10Impl implements EglBase10 {
       this.eglContext = EGL10.EGL_NO_CONTEXT;
       this.eglDisplay = EGL10.EGL_NO_DISPLAY;
       this.eglConfig = null;
-      this.refCountDelegate = new RefCountDelegate(() -> {
-          
-          });
+      this.refCountDelegate = new RefCountDelegate(() -> {});
     }
     
     public void retain() {
@@ -200,7 +197,7 @@ class EglBase10Impl implements EglBase10 {
     if (this.eglSurface != EGL10.EGL_NO_SURFACE)
       throw new RuntimeException("Already has an EGLSurface"); 
     EGL10 egl = this.eglConnection.getEgl();
-    int[] surfaceAttribs = { 12344 };
+    int[] surfaceAttribs = { EGL10.EGL_NONE };
     this.eglSurface = egl.eglCreateWindowSurface(this.eglConnection
         .getDisplay(), this.eglConnection.getConfig(), nativeWindow, surfaceAttribs);
     if (this.eglSurface == EGL10.EGL_NO_SURFACE)
@@ -217,7 +214,7 @@ class EglBase10Impl implements EglBase10 {
     if (this.eglSurface != EGL10.EGL_NO_SURFACE)
       throw new RuntimeException("Already has an EGLSurface"); 
     EGL10 egl = this.eglConnection.getEgl();
-    int[] surfaceAttribs = { 12375, width, 12374, height, 12344 };
+    int[] surfaceAttribs = { EGL10.EGL_WIDTH, width, EGL10.EGL_HEIGHT, height, EGL10.EGL_NONE };
     this.eglSurface = egl.eglCreatePbufferSurface(this.eglConnection
         .getDisplay(), this.eglConnection.getConfig(), surfaceAttribs);
     if (this.eglSurface == EGL10.EGL_NO_SURFACE)
@@ -238,14 +235,14 @@ class EglBase10Impl implements EglBase10 {
   public int surfaceWidth() {
     int[] widthArray = new int[1];
     this.eglConnection.getEgl().eglQuerySurface(this.eglConnection
-        .getDisplay(), this.eglSurface, 12375, widthArray);
+        .getDisplay(), this.eglSurface, EGL10.EGL_WIDTH, widthArray);
     return widthArray[0];
   }
   
   public int surfaceHeight() {
     int[] heightArray = new int[1];
     this.eglConnection.getEgl().eglQuerySurface(this.eglConnection
-        .getDisplay(), this.eglSurface, 12374, heightArray);
+        .getDisplay(), this.eglSurface, EGL10.EGL_HEIGHT, heightArray);
     return heightArray[0];
   }
   
@@ -332,8 +329,8 @@ class EglBase10Impl implements EglBase10 {
   private static EGLContext createEglContext(EGL10 egl, @Nullable EGLContext sharedContext, EGLDisplay eglDisplay, EGLConfig eglConfig, int openGlesVersion) {
     EGLContext eglContext;
     if (sharedContext != null && sharedContext == EGL10.EGL_NO_CONTEXT)
-      throw new RuntimeException("Invalid sharedContext"); 
-    int[] contextAttributes = { 12440, openGlesVersion, 12344 };
+      throw new RuntimeException("Invalid sharedContext");
+    int[] contextAttributes = { EGL_CONTEXT_CLIENT_VERSION, openGlesVersion, EGL10.EGL_NONE };
     EGLContext rootContext = (sharedContext == null) ? EGL10.EGL_NO_CONTEXT : sharedContext;
     synchronized (EglBase.lock) {
       eglContext = egl.eglCreateContext(eglDisplay, eglConfig, rootContext, contextAttributes);

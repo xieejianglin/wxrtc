@@ -15,10 +15,10 @@ public class GlUtil {
   
   public static void checkNoGLES2Error(String msg) {
     int error = GLES20.glGetError();
-    if (error != 0)
-      throw (error == 1285) ? 
+    if (error != GLES20.GL_NO_ERROR)
+      throw (error == GLES20.GL_OUT_OF_MEMORY) ?
         new GlOutOfMemoryException(error, msg) : 
-        new GLException(error, msg + ": GLES20 error: " + msg); 
+        new GLException(error, msg + ": GLES20 error: " + error);
   }
   
   public static FloatBuffer createFloatBuffer(float[] coords) {
@@ -35,10 +35,10 @@ public class GlUtil {
     GLES20.glGenTextures(1, textureArray, 0);
     int textureId = textureArray[0];
     GLES20.glBindTexture(target, textureId);
-    GLES20.glTexParameterf(target, 10241, 9729.0F);
-    GLES20.glTexParameterf(target, 10240, 9729.0F);
-    GLES20.glTexParameterf(target, 10242, 33071.0F);
-    GLES20.glTexParameterf(target, 10243, 33071.0F);
+    GLES20.glTexParameterf(target, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
+    GLES20.glTexParameterf(target, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+    GLES20.glTexParameterf(target, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE);
+    GLES20.glTexParameterf(target, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE);
     checkNoGLES2Error("generateTexture");
     return textureId;
   }

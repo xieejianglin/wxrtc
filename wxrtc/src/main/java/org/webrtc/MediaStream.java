@@ -128,7 +128,7 @@ public class MediaStream {
         return;
       } 
     } 
-    Logging.e("MediaStream", "Couldn't not find track");
+    Logging.e(TAG, "Couldn't not find track");
   }
   
   private static native boolean nativeAddAudioTrackToNativeStream(long paramLong1, long paramLong2);

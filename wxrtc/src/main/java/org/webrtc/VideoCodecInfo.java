@@ -18,9 +18,9 @@ public class VideoCodecInfo {
   
   public static final String H264_LEVEL_3_1 = "1f";
   
-  public static final String H264_CONSTRAINED_HIGH_3_1 = "640c1f";
+  public static final String H264_CONSTRAINED_HIGH_3_1 = H264_PROFILE_CONSTRAINED_HIGH + H264_LEVEL_3_1;
   
-  public static final String H264_CONSTRAINED_BASELINE_3_1 = "42e01f";
+  public static final String H264_CONSTRAINED_BASELINE_3_1 = H264_PROFILE_CONSTRAINED_BASELINE + H264_LEVEL_3_1;
   
   public final String name;
   

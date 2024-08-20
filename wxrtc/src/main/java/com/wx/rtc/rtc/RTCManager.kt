@@ -161,8 +161,10 @@ internal class RTCManager : PeerConnectionEvents {
             pcm.client?.close()
 
             if (pcm.videoRecvEnabled) {
-                pcm.videoSink?.let {
-                    startRemoteVideo(userId, it.target as SurfaceViewRenderer)
+                pcm.videoSink?.let { videoSink ->
+                    videoSink.target?.let { target ->
+                        startRemoteVideo(userId, target as SurfaceViewRenderer)
+                    }
                 }
             }
             if (pcm.videoRecvMute) {

@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     private val gson = GsonBuilder().disableHtmlEscaping().create()
-    private var mWXRTC: WXRTC = WXRTC.getInstance()
+    private val mWXRTC: WXRTC = WXRTC.getInstance()
     private val mUserId = "123456789"
     private var localVideoInLocalView = true
     private var isFrontCamera = false
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.login("100000", mUserId)
 
         val param = WXRTCVideoEncParam()
-        param.videoMinBitrate = 3000
+        param.videoMinBitrate = 2800
         param.videoMaxBitrate = 3000
         param.videoFps = 30
         param.videoResolution = WXRTCDef.WXRTC_VIDEO_RESOLUTION_1920_1080
@@ -222,6 +222,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onLogout(reason: Int) {
         Toast.makeText(this, "登出成功", Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     override fun onEnterRoom() {

@@ -49,28 +49,38 @@
         android:text="切换摄像头"
         android:layout_marginBottom="10dp"
         app:layout_constraintLeft_toRightOf="@id/btn_change_video"
-        app:layout_constraintRight_toLeftOf="@id/btn_zoomin_camera"
+        app:layout_constraintRight_toLeftOf="@id/btn_screen_capture"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
+<!--    <Button-->
+<!--        android:id="@+id/btn_zoomin_camera"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:minWidth="0dp"-->
+<!--        android:text="放大"-->
+<!--        android:layout_marginBottom="10dp"-->
+<!--        app:layout_constraintLeft_toRightOf="@id/btn_change_camera"-->
+<!--        app:layout_constraintRight_toLeftOf="@id/btn_zoomout_camera"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"/>-->
+
+<!--    <Button-->
+<!--        android:id="@+id/btn_zoomout_camera"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:minWidth="0dp"-->
+<!--        android:text="缩小"-->
+<!--        android:layout_marginBottom="10dp"-->
+<!--        app:layout_constraintLeft_toRightOf="@id/btn_zoomin_camera"-->
+<!--        app:layout_constraintRight_toLeftOf="@id/btn_change_orientation"-->
+<!--        app:layout_constraintBottom_toBottomOf="parent"/>-->
     <Button
-        android:id="@+id/btn_zoomin_camera"
+        android:id="@+id/btn_screen_capture"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:minWidth="0dp"
-        android:text="放大"
+        android:text="共享屏幕"
         android:layout_marginBottom="10dp"
         app:layout_constraintLeft_toRightOf="@id/btn_change_camera"
-        app:layout_constraintRight_toLeftOf="@id/btn_zoomout_camera"
-        app:layout_constraintBottom_toBottomOf="parent"/>
-
-    <Button
-        android:id="@+id/btn_zoomout_camera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minWidth="0dp"
-        android:text="缩小"
-        android:layout_marginBottom="10dp"
-        app:layout_constraintLeft_toRightOf="@id/btn_zoomin_camera"
         app:layout_constraintRight_toLeftOf="@id/btn_change_orientation"
         app:layout_constraintBottom_toBottomOf="parent"/>
 
@@ -81,7 +91,7 @@
         android:minWidth="0dp"
         android:text="竖屏"
         android:layout_marginBottom="10dp"
-        app:layout_constraintLeft_toRightOf="@id/btn_zoomout_camera"
+        app:layout_constraintLeft_toRightOf="@id/btn_screen_capture"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"/>
 

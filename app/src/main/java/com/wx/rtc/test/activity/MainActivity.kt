@@ -16,6 +16,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import com.blankj.utilcode.util.ConvertUtils
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
@@ -24,6 +25,8 @@ import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCListener
 import com.wx.rtc.WXRTCSnapshotListener
 import com.wx.rtc.test.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.webrtc.SurfaceViewRenderer
 import java.io.File
 
@@ -41,8 +44,9 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val mWXRTC: WXRTC = WXRTC.getInstance()
     private val mUserId = "123456789"
     private var localVideoInLocalView = true
-    private var isFrontCamera = false
+    private var isFrontCamera = true
     private var remoteUserId: String? = null
+    private var isScreenCapture = false
 
     private val localVideoView: SurfaceViewRenderer?  by lazy { findViewById(R.id.localVideo) }
     private val remoteVideoView: SurfaceViewRenderer?  by lazy { findViewById(R.id.remoteVideo) }
@@ -52,8 +56,9 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val closeSnapshotButton: ImageButton?  by lazy { findViewById(R.id.btn_close_snapshot) }
     private val changeVideoButton: Button?  by lazy { findViewById(R.id.btn_change_video) }
     private val changeCameraButton: Button?  by lazy { findViewById(R.id.btn_change_camera) }
-    private val zoomInCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomin_camera) }
-    private val zoomOutCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomout_camera) }
+//    private val zoomInCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomin_camera) }
+//    private val zoomOutCamreaButton: Button?  by lazy { findViewById(R.id.btn_zoomout_camera) }
+    private val screenCaptureButton: Button?  by lazy { findViewById(R.id.btn_screen_capture) }
     private val changeOrientationButton: Button?  by lazy { findViewById(R.id.btn_change_orientation) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -116,11 +121,40 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
                 mWXRTC.switchCamera(isFrontCamera)
             }
         }
-        zoomInCamreaButton?.setOnClickListener {
-            mWXRTC.cameraZoom += 1
-        }
-        zoomOutCamreaButton?.setOnClickListener {
-            mWXRTC.cameraZoom -= 1
+//        zoomInCamreaButton?.setOnClickListener {
+//            mWXRTC.cameraZoom += 1
+//        }
+//        zoomOutCamreaButton?.setOnClickListener {
+//            mWXRTC.cameraZoom -= 1
+//        }
+        screenCaptureButton?.setOnClickListener {
+            isScreenCapture = !isScreenCapture
+            if (isScreenCapture) {
+                screenCaptureButton?.text = "结束共享"
+                mWXRTC.stopLocalVideo()
+
+                val encParam = WXRTCVideoEncParam()
+                encParam.videoResolution = WXRTCDef.WXRTC_VIDEO_RESOLUTION_1920_1080
+                encParam.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
+                encParam.videoFps = 10
+                encParam.videoMinBitrate = 2800
+                encParam.videoMaxBitrate = 3000
+
+                if (localVideoInLocalView) {
+                    mWXRTC.startScreenCapture(encParam, localVideoView)
+                } else {
+                    mWXRTC.startScreenCapture(encParam, remoteVideoView)
+                }
+            } else {
+                screenCaptureButton?.text = "共享屏幕"
+                mWXRTC.stopScreenCapture()
+
+                if (localVideoInLocalView) {
+                    mWXRTC.startLocalVideo(isFrontCamera, localVideoView)
+                } else {
+                    mWXRTC.startLocalVideo(isFrontCamera, remoteVideoView)
+                }
+            }
         }
         changeOrientationButton?.setOnClickListener {
             if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
@@ -231,8 +265,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.startLocalVideo(isFrontCamera, remoteVideoView)
         mWXRTC.startLocalAudio()
 
-        mWXRTC.startProcess()
-
+//        mWXRTC.startProcess()
 
         val speaker = WXRTC.getSpeaker(10000L, "测试")
         speaker.spkId = 1000L

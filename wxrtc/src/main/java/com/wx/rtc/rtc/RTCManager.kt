@@ -286,6 +286,40 @@ internal class RTCManager : PeerConnectionEvents {
         }
     }
 
+    fun updateRemoteVide(userId: String, renderer: SurfaceViewRenderer?) {
+        if (localRenderer != null && renderer === localRenderer) {
+            setLocalRenderer(null)
+        }
+
+        var pcm = getPeerConnectionManagerByUserId(userId)
+
+        if (pcm != null) {
+            if (pcm.videoSink != null && pcm.videoSink!!.target != null && renderer != null && pcm.videoSink!!.target === renderer) {
+                return
+            }
+
+            renderer?.apply {
+                if (!isInited || isReleased) {
+                    init(eglBase.eglBaseContext, null)
+                    setEnableHardwareScaler(false /* enabled */)
+                }
+            }
+
+            if (pcm.videoSink == null) {
+                pcm.videoSink = ProxyVideoSink()
+            }
+            pcm.videoSink!!.setTarget(userId, renderer)
+
+            if (pcm.renderParams == null) {
+                pcm.renderParams = WXRTCRenderParams()
+            }
+
+            renderer?.let {
+                setRendererRenderParams(false, it, pcm.renderParams!!)
+            }
+        }
+    }
+
     fun stopRemoteVideo(userId: String) {
         getPeerConnectionManagerByUserId(userId)?.let { pcm ->
             pcm.videoRecvEnabled = false

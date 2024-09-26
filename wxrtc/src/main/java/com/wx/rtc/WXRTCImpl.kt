@@ -401,9 +401,9 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.startRemoteVideo(userId, renderer)
     }
 
-    override fun updateRemoteVide(userId: String, renderer: SurfaceViewRenderer?) {
+    override fun updateRemoteVideo(userId: String, renderer: SurfaceViewRenderer?) {
         renderer?.visibility = View.VISIBLE
-        mRTCManager.updateRemoteVide(userId, renderer)
+        mRTCManager.updateRemoteVideo(userId, renderer)
     }
 
     override fun stopRemoteVideo(userId: String) {

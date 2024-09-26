@@ -286,7 +286,7 @@ internal class RTCManager : PeerConnectionEvents {
         }
     }
 
-    fun updateRemoteVide(userId: String, renderer: SurfaceViewRenderer?) {
+    fun updateRemoteVideo(userId: String, renderer: SurfaceViewRenderer?) {
         if (localRenderer != null && renderer === localRenderer) {
             setLocalRenderer(null)
         }

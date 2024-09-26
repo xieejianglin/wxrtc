@@ -175,7 +175,7 @@ abstract class WXRTC {
 
     abstract fun startRemoteVideo(userId: String, renderer: SurfaceViewRenderer?)
 
-    abstract fun updateRemoteVide(userId: String, renderer: SurfaceViewRenderer?)
+    abstract fun updateRemoteVideo(userId: String, renderer: SurfaceViewRenderer?)
 
     abstract fun stopRemoteVideo(userId: String)
 

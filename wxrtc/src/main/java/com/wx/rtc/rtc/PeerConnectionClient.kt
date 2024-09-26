@@ -128,6 +128,7 @@ internal class PeerConnectionClient(
     private var preferIsac = false
     private var videoCapturerStopped = true
     private var isError = false
+    private var isClosing = false
     var localRender: VideoSink? = null
     var remoteSink: VideoSink? = null
     private val peerConnectionParameters: PeerConnectionParameters = PeerConnectionParameters()
@@ -745,6 +746,7 @@ internal class PeerConnectionClient(
     }
 
     private fun closeInternal() {
+        isClosing = true
         if (peerConnectionParameters.aecDump) {
             factory?.stopAecDump()
         }
@@ -752,8 +754,6 @@ internal class PeerConnectionClient(
         statsTimer.cancel()
         dataChannel?.dispose()
         dataChannel = null
-        peerConnection?.dispose()
-        peerConnection = null
         Log.d(TAG, "Closing audio source.")
         audioSource?.dispose()
         audioSource = null
@@ -773,9 +773,12 @@ internal class PeerConnectionClient(
         surfaceTextureHelper?.dispose()
         surfaceTextureHelper = null
         localRender = null
-        localVideoTrack?.dispose()
+        peerConnection?.dispose()
+        peerConnection = null
+        localVideoSender = null
+        localAudioSender = null
         localVideoTrack = null
-//        remoteSink = null
+        localAudioTrack = null
         Log.d(TAG, "Closing peer connection factory.")
         factory?.dispose()
         factory = null
@@ -1500,8 +1503,10 @@ internal class PeerConnectionClient(
                 } else if (newState == PeerConnectionState.FAILED) {
                     reportError("DTLS connection failed.")
                 } else if (newState == PeerConnectionState.CLOSED) {
-                    peerConnection?.dispose()
-                    peerConnection = null
+                    if (!isClosing) {
+                        peerConnection?.dispose()
+                        peerConnection = null
+                    }
 
                     if (isNeedReconnect) {
                         executor.execute {

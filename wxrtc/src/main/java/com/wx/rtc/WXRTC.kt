@@ -41,47 +41,47 @@ abstract class WXRTC {
     var isEnterRoom: Boolean = false
         protected set
 
-    abstract fun init(context: Context);
+    abstract fun init(context: Context)
 
-    abstract fun setRTCVideoParam(param: WXRTCVideoEncParam);
+    abstract fun setRTCVideoParam(param: WXRTCVideoEncParam)
 
-    abstract fun setRTCListener(listener: WXRTCListener?);
+    abstract fun setRTCListener(listener: WXRTCListener?)
 
-    abstract fun setCallListener(listener: WXCallListener?);
+    abstract fun setCallListener(listener: WXCallListener?)
 
-    abstract fun login(appId: String, userId: String);
+    abstract fun login(appId: String, userId: String)
 
-    abstract fun logout();
+    abstract fun logout()
 
-    abstract fun enterRoom(roomId: String);
+    abstract fun enterRoom(roomId: String)
 
-    abstract fun exitRoom();
+    abstract fun exitRoom()
 
-    abstract fun inviteCall(inviteId: String, roomId: String);
+    abstract fun inviteCall(inviteId: String, roomId: String)
 
-    abstract fun cancelInvitation();
+    abstract fun cancelInvitation()
 
-    abstract fun cancelInvitation(inviteId: String);
+    abstract fun cancelInvitation(inviteId: String)
 
-    abstract fun acceptInvitation();
+    abstract fun acceptInvitation()
 
-    abstract fun acceptInvitation(inviteId: String);
+    abstract fun acceptInvitation(inviteId: String)
 
-    abstract fun rejectInvitation();
+    abstract fun rejectInvitation()
 
-    abstract fun rejectInvitation(inviteId: String);
+    abstract fun rejectInvitation(inviteId: String)
 
-    abstract fun invitationLineBusy(inviteId: String);
+    abstract fun invitationLineBusy(inviteId: String)
 
-    abstract fun hangupCall();
+    abstract fun hangupCall()
 
-    abstract fun hangupCall(inviteId: String);
+    abstract fun hangupCall(inviteId: String)
 
-    abstract fun sendRoomMsg(cmd: String, msg: String);
+    abstract fun sendRoomMsg(cmd: String, msg: String)
 
-    abstract fun startProcess();
+    abstract fun startProcess()
 
-    abstract fun endProcess();
+    abstract fun endProcess()
 
     fun startRecord() {
         startRecord(null)
@@ -118,7 +118,7 @@ abstract class WXRTC {
         extraData: String? = null,
         needAfterAsr: Boolean = false,
         hospitalId: String? = null,
-        spkList: List<Speaker>? = null);
+        spkList: List<Speaker>? = null)
 
     fun endAndStartRecord() {
         endAndStartRecord(null)
@@ -155,58 +155,66 @@ abstract class WXRTC {
         extraData: String? = null,
         needAfterAsr: Boolean = false,
         hospitalId: String? = null,
-        spkList: List<Speaker>? = null);
+        spkList: List<Speaker>? = null)
 
-    abstract fun endRecord();
+    abstract fun endRecord()
 
-    abstract fun startAsr(hospitalId: String?, spkList: List<Speaker>?);
+    abstract fun startAsr(hospitalId: String?, spkList: List<Speaker>?)
 
-    abstract fun endAndStartAsr(hospitalId: String?, spkList: List<Speaker>?);
+    abstract fun endAndStartAsr(hospitalId: String?, spkList: List<Speaker>?)
 
-    abstract fun endAsr();
+    abstract fun endAsr()
 
-    abstract fun startLocalVideo(frontCamera: Boolean, renderer: SurfaceViewRenderer?);
+    abstract fun startLocalVideo(frontCamera: Boolean, renderer: SurfaceViewRenderer?)
 
-    abstract fun updateLocalVideo(renderer: SurfaceViewRenderer?);
+    abstract fun updateLocalVideo(renderer: SurfaceViewRenderer?)
 
-    abstract fun stopLocalVideo();
+    abstract fun stopLocalVideo()
 
-    abstract fun muteLocalVideo(mute: Boolean);
+    abstract fun muteLocalVideo(mute: Boolean)
 
-    abstract fun startRemoteVideo(userId: String, renderer: SurfaceViewRenderer?);
+    abstract fun startRemoteVideo(userId: String, renderer: SurfaceViewRenderer?)
 
-    abstract fun stopRemoteVideo(userId: String);
+    abstract fun stopRemoteVideo(userId: String)
 
-    abstract fun stopAllRemoteVideo();
+    abstract fun stopAllRemoteVideo()
 
-    abstract fun muteRemoteVideo(userId: String, mute: Boolean);
+    abstract fun muteRemoteVideo(userId: String, mute: Boolean)
 
-    abstract fun muteAllRemoteVideo(mute: Boolean);
+    abstract fun muteAllRemoteVideo(mute: Boolean)
 
-    abstract fun setLocalRenderParams(params: WXRTCRenderParams);
+    abstract fun setLocalRenderParams(params: WXRTCRenderParams)
 
-    abstract fun setRemoteRenderParams(userId: String, params: WXRTCRenderParams);
+    abstract fun setRemoteRenderParams(userId: String, params: WXRTCRenderParams)
 
-    abstract fun startLocalAudio();
+    abstract fun startLocalAudio()
 
-    abstract fun stopLocalAudio();
+    abstract fun stopLocalAudio()
 
-    abstract fun muteLocalAudio(mute: Boolean);
+    abstract fun muteLocalAudio(mute: Boolean)
 
-    abstract fun muteRemoteAudio(userId: String, mute: Boolean);
+    abstract fun muteRemoteAudio(userId: String, mute: Boolean)
 
-    abstract fun muteAllRemoteAudio(mute: Boolean);
+    abstract fun muteAllRemoteAudio(mute: Boolean)
 
-    abstract fun setRemoteAudioVolume(userId: String, volume: Int);
+    abstract fun setRemoteAudioVolume(userId: String, volume: Int)
 
-    abstract fun setAllRemoteAudioVolume(volume: Int);
+    abstract fun setAllRemoteAudioVolume(volume: Int)
 
-    abstract fun setSpeakerOn(speakerOn: Boolean);
+    abstract fun startScreenCapture(encParam: WXRTCDef.WXRTCVideoEncParam?, renderer: SurfaceViewRenderer?)
+
+    abstract fun stopScreenCapture()
+
+    abstract fun pauseScreenCapture()
+
+    abstract fun resumeScreenCapture()
+
+    abstract fun setSpeakerOn(speakerOn: Boolean)
 
     abstract val isFrontCamera: Boolean
         get
 
-    abstract fun switchCamera(frontCamera: Boolean);
+    abstract fun switchCamera(frontCamera: Boolean)
 
     abstract val isCameraZoomSupported: Boolean
         get
@@ -216,9 +224,9 @@ abstract class WXRTC {
 
     abstract var cameraZoom: Int
 
-    abstract fun snapshotVideo(userId: String, listener: WXRTCSnapshotListener?): Boolean;
+    abstract fun snapshotVideo(userId: String, listener: WXRTCSnapshotListener?): Boolean
 
-    abstract fun destory();
+    abstract fun destory()
 
     companion object {
 

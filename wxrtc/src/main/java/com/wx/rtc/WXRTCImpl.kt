@@ -454,6 +454,22 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.setAllRemoteAudioVolume(volume)
     }
 
+    override fun startScreenCapture(encParam: WXRTCVideoEncParam?, renderer: SurfaceViewRenderer?) {
+        mRTCManager.startScreenCapture(encParam, renderer)
+    }
+
+    override fun stopScreenCapture() {
+        mRTCManager.stopScreenCapture()
+    }
+
+    override fun pauseScreenCapture() {
+        mRTCManager.pauseScreenCapture()
+    }
+
+    override fun resumeScreenCapture() {
+        mRTCManager.resumeScreenCapture()
+    }
+
     override fun setSpeakerOn(speakerOn: Boolean) {
         this.speakerOn = speakerOn
         val audioManager = mContext!!.getSystemService(Context.AUDIO_SERVICE) as AudioManager

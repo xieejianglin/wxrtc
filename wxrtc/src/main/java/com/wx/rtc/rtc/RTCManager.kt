@@ -1,6 +1,7 @@
 package com.wx.rtc.rtc
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.text.TextUtils
 import android.util.Log
@@ -424,6 +425,34 @@ internal class RTCManager : PeerConnectionEvents {
             pcm.audioVolume = volume.toFloat()
             pcm.client?.setRemoteAudioTrackVolume(volume)
         }
+    }
+
+    fun startScreenCapture(encParam: WXRTCVideoEncParam?, renderer: SurfaceViewRenderer?) {
+        publishVideoSendEnabled = true
+        publishPCClient?.startScreenCapture()
+        setLocalRenderer(renderer)
+        encParam?.let {
+            publishPCClient?.let { client ->
+                client.setScreenEncParamCapture(it)
+            }
+        } ?: {
+            publishPCClient?.let { client ->
+                client.setScreenEncParamCapture(mVideoEncParam)
+            }
+        }
+    }
+
+    fun stopScreenCapture() {
+        publishVideoSendEnabled = false
+        publishPCClient?.stopScreenCapture()
+    }
+
+    fun pauseScreenCapture() {
+        publishPCClient?.pauseScreenCapture()
+    }
+
+    fun resumeScreenCapture() {
+        publishPCClient?.resumeScreenCapture()
     }
 
     val isFrontCamera: Boolean

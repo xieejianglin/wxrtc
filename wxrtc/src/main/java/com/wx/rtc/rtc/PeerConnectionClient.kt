@@ -1,10 +1,13 @@
 package com.wx.rtc.rtc
 
 import android.content.Context
+import android.content.Intent
+import android.media.projection.MediaProjection
 import android.os.Environment
 import android.os.ParcelFileDescriptor
 import android.util.Log
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
+import com.wx.rtc.utils.ActivityUtils
 import com.wx.rtc.utils.RTCUtils
 import com.wx.rtc.utils.RTCUtils.getVideoResolution
 import kotlinx.coroutines.CoroutineScope
@@ -47,6 +50,9 @@ import org.webrtc.PeerConnection.SignalingState
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RtpReceiver
 import org.webrtc.RtpSender
+import org.webrtc.RtpTransceiver
+import org.webrtc.RtpTransceiver.RtpTransceiverInit
+import org.webrtc.ScreenCapturerAndroid
 import org.webrtc.SdpObserver
 import org.webrtc.SessionDescription
 import org.webrtc.SoftwareVideoDecoderFactory
@@ -59,7 +65,6 @@ import org.webrtc.VideoEncoderFactory
 import org.webrtc.VideoFrame
 import org.webrtc.VideoProcessor
 import org.webrtc.VideoProcessor.FrameAdaptationParameters
-import org.webrtc.VideoProcessor.applyFrameAdaptationParameters
 import org.webrtc.VideoSink
 import org.webrtc.VideoSource
 import org.webrtc.VideoTrack
@@ -83,6 +88,7 @@ import java.util.TimerTask
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.regex.Pattern
+
 
 /*
 *  Copyright 2014 The WebRTC Project Authors. All rights reserved.
@@ -127,6 +133,7 @@ internal class PeerConnectionClient(
     private val peerConnectionParameters: PeerConnectionParameters = PeerConnectionParameters()
     private var signalingParameters: SignalingParameters? = null
     private var videoParam: WXRTCVideoEncParam = WXRTCVideoEncParam()
+    private var screenVideoEncParam: WXRTCVideoEncParam = WXRTCVideoEncParam()
     private var audioConstraints: MediaConstraints? = null
     private var sdpMediaConstraints: MediaConstraints? = null
 
@@ -143,6 +150,7 @@ internal class PeerConnectionClient(
     private var localVideoTrack: VideoTrack? = null
     private var remoteVideoTrack: VideoTrack? = null
     private var localVideoSender: RtpSender? = null
+    private var localAudioSender: RtpSender? = null
     private var localAudioTrack: AudioTrack? = null
     private var audioDeviceModule: JavaAudioDeviceModule? = null
     private var dataChannel: DataChannel? = null
@@ -162,6 +170,8 @@ internal class PeerConnectionClient(
     private var cameraDeviceName: String? = null
     private var cameraEnumerator: CameraEnumerator? = null
     private var cameraVideoCapturer: CameraVideoCapturer? = null
+
+    private val CAPTURE_PERMISSION_REQUEST_CODE = 1
 
     var isNeedReconnect: Boolean = true
 //    var isPublish: Boolean = false
@@ -292,6 +302,18 @@ internal class PeerConnectionClient(
             setVideoBitrate(param.videoMinBitrate, param.videoMaxBitrate)
         }
         videoParam = param
+        screenVideoEncParam = param
+    }
+
+    fun setScreenEncParamCapture(param: WXRTCVideoEncParam) {
+//        if (screenVideoEncParam.videoResolution != param.videoResolution || screenVideoEncParam.videoFps != param.videoFps) {
+            val size = getVideoResolution(param.videoResolution)
+            changeVideoSource(size.width, size.height, param.videoFps)
+//        }
+//        if (screenVideoEncParam.videoMinBitrate != param.videoMinBitrate || screenVideoEncParam.videoMaxBitrate != param.videoMaxBitrate) {
+            setVideoBitrate(param.videoMinBitrate, param.videoMaxBitrate)
+//        }
+        screenVideoEncParam = param
     }
 
     /**
@@ -377,7 +399,6 @@ internal class PeerConnectionClient(
                 }
 
                 override fun onCameraOpening(param1String: String?) {
-                    videoCapturerStopped = false
                     cameraDeviceName = param1String
                 }
 
@@ -387,7 +408,6 @@ internal class PeerConnectionClient(
                 override fun onCameraClosed(param1String: String?) {
                     cameraDeviceName?.let {
                         if (it == param1String) {
-                            videoCapturerStopped = true
                             cameraDeviceName = null
                         }
                     }
@@ -402,6 +422,15 @@ internal class PeerConnectionClient(
         return null
     }
 
+    private fun createScreenCapturer() : VideoCapturer {
+        return ScreenCapturerAndroid(
+            mediaProjectionPermissionResultData, object : MediaProjection.Callback() {
+                override fun onStop() {
+                    reportError("User revoked permission to capture the screen.")
+                }
+            })
+    }
+
     fun close() {
         executor.execute { this.closeInternal() }
     }
@@ -410,7 +439,7 @@ internal class PeerConnectionClient(
         get() = isPublish
 
     val isCameraOpened: Boolean
-        get() = !this.videoCapturerStopped
+        get() = this.cameraDeviceName == null
 
     private fun createPeerConnectionFactoryInternal(options: PeerConnectionFactory.Options?) {
         isError = false
@@ -663,12 +692,11 @@ internal class PeerConnectionClient(
         // NOTE: this _must_ happen while |factory| is alive!
         Logging.enableLogToDebugOutput(Logging.Severity.LS_INFO)
         val mediaStreamLabels = listOf("ARDAMS")
-//        videoCapturerStopped = true
         if (isPublish) {
-            peerConnection!!.addTrack(createVideoTrack(false), mediaStreamLabels)
-            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
-
-            findVideoSender()
+            localVideoSender = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO, RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY, mediaStreamLabels)).sender
+            localAudioSender = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO, RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY, mediaStreamLabels)).sender
+//            peerConnection!!.addTrack(createVideoTrack(false), mediaStreamLabels)
+//            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
         } else {
             remoteVideoTrack = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO).receiver.track() as VideoTrack?
             // We can add the renderers right away because we don't need to wait for an
@@ -737,7 +765,6 @@ internal class PeerConnectionClient(
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }
-//        videoCapturerStopped = true
         videoCapturer?.dispose()
         videoCapturer = null
         Log.d(TAG, "Closing video source.")
@@ -887,6 +914,14 @@ internal class PeerConnectionClient(
 
     fun startAudioCapture() {
         executor.execute {
+            if (localAudioSender == null) {
+                return@execute
+            }
+            if (audioSource == null) {
+                val track = createAudioTrack()
+                localAudioSender?.setTrack(track, true)
+            }
+
             audioDeviceModule?.resumeRecord()
         }
     }
@@ -1050,9 +1085,14 @@ internal class PeerConnectionClient(
 
     fun startVideoSource(frontCamera: Boolean) {
         executor.execute {
-            if (videoSource == null) {
+            if (localVideoSender == null) {
                 return@execute
             }
+            if (videoCapturer == null || !(videoCapturer is CameraVideoCapturer)) {
+                val track = createVideoTrack(false)
+                localVideoSender?.setTrack(track, true)
+            }
+
             try {
                 videoCapturer?.stopCapture()
             } catch (e: InterruptedException) {
@@ -1067,7 +1107,6 @@ internal class PeerConnectionClient(
                 Log.d(TAG, "Restart video source.")
                 val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
                 startCapture(size.width, size.height, videoParam.videoFps)
-//                videoCapturerStopped = false
             }
         }
     }
@@ -1080,14 +1119,13 @@ internal class PeerConnectionClient(
                     videoCapturer!!.stopCapture()
                 } catch (e: InterruptedException) {
                 }
-//                videoCapturerStopped = true
             }
         }
     }
 
     private fun changeVideoSource(width: Int, height: Int, framerate: Int) {
         executor.execute {
-            if (isCameraOpened) {
+            if (!videoCapturerStopped) {
                 videoCapturer?.let {
                     Log.d(TAG, "change video source.")
                     it.changeCaptureFormat(width, height, framerate)
@@ -1193,9 +1231,11 @@ internal class PeerConnectionClient(
             }
 
             override fun onCapturerStarted(b: Boolean) {
+                videoCapturerStopped = false
             }
 
             override fun onCapturerStopped() {
+                videoCapturerStopped = true
             }
 
             override fun onFrameCaptured(videoFrame: VideoFrame) {
@@ -1203,19 +1243,6 @@ internal class PeerConnectionClient(
             }
         })
         return localVideoTrack
-    }
-
-    private fun findVideoSender() {
-        if (peerConnection != null) {
-            for (sender in peerConnection!!.senders) {
-                sender.track()?.let {
-                    if (it.kind() == VIDEO_TRACK_TYPE) {
-                        Log.d(TAG, "Found video sender.")
-                        localVideoSender = sender
-                    }
-                }
-            }
-        }
     }
 
     private val remoteAudioTrack: AudioTrack?
@@ -1277,6 +1304,101 @@ internal class PeerConnectionClient(
         }
         Log.d(TAG, "changeCaptureFormat: " + width + "x" + height + "@" + framerate)
         videoSource!!.adaptOutputFormat(width, height, framerate)
+    }
+
+    fun startScreenCapture() {
+        executor.execute {
+            if (localVideoSender == null) {
+                return@execute
+            }
+            if (videoCapturer == null || !(videoCapturer is ScreenCapturerAndroid)) {
+                val track = createVideoTrack(true)
+                localVideoSender?.setTrack(track, true)
+            }
+
+            try {
+                videoCapturer?.stopCapture()
+            } catch (e: InterruptedException) {
+            }
+
+            if (mediaProjectionPermissionResultData != null) {
+                this.videoCapturer = createScreenCapturer().apply {
+                    initialize(
+                        surfaceTextureHelper,
+                        appContext,
+                        videoSource!!.capturerObserver
+                    )
+                    Log.d(TAG, "Restart video source.")
+                    val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolution)
+                    startCapture(size.width, size.height, screenVideoEncParam.videoFps)
+
+                    setScreenEncParamCapture(screenVideoEncParam)
+                }
+            } else {
+                ActivityUtils.getTopActivity()?.let {
+                    it.startActivity(Intent(it, WXScreenCaptureAssistantActivity::class.java))
+
+                    CoroutineScope(Dispatchers.IO).launch {
+                        while (true) {
+                            delay(100L)
+                            if (mediaProjectionPermissionResultData != null) {
+                                Log.d(TAG, "WXScreenCaptureAssistantActivity mediaProjectionPermissionResultData")
+
+                                withContext(Dispatchers.Main) {
+                                    this@PeerConnectionClient.videoCapturer = createScreenCapturer().apply {
+                                        initialize(
+                                            surfaceTextureHelper,
+                                            appContext,
+                                            videoSource!!.capturerObserver
+                                        )
+                                        Log.d(TAG, "Restart video source.")
+                                        val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolution)
+                                        startCapture(size.width, size.height, screenVideoEncParam.videoFps)
+
+                                        setScreenEncParamCapture(screenVideoEncParam)
+                                    }
+                                }
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun stopScreenCapture() {
+        executor.execute {
+            if (localVideoSender == null) {
+                return@execute
+            }
+
+            videoCapturer?.let {
+                if (it is ScreenCapturerAndroid){
+                    it.stopCapture()
+                }
+            }
+        }
+    }
+
+    fun pauseScreenCapture() {
+        executor.execute {
+            if (videoCapturer == null || !(videoCapturer is ScreenCapturerAndroid)) {
+                return@execute
+            }
+
+            localVideoSender?.track()?.setEnabled(false)
+        }
+    }
+
+    fun resumeScreenCapture() {
+        executor.execute {
+            if (videoCapturer == null || !(videoCapturer is ScreenCapturerAndroid)) {
+                return@execute
+            }
+
+            localVideoSender?.track()?.setEnabled(true)
+        }
     }
 
     fun sendMessage(message: String) {
@@ -1794,5 +1916,7 @@ internal class PeerConnectionClient(
             lines[mLineIndex] = newMLine
             return joinString(Arrays.asList(*lines), "\r\n", true /* delimiterAtEnd */)
         }
+
+        var mediaProjectionPermissionResultData : Intent? = null
     }
 }

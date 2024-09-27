@@ -481,6 +481,7 @@ internal class RTCManager : PeerConnectionEvents {
     fun stopScreenCapture() {
         publishVideoSendEnabled = false
         publishPCClient?.stopScreenCapture()
+        setLocalRenderer(null)
     }
 
     fun pauseScreenCapture() {

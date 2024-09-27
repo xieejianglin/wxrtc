@@ -69,6 +69,7 @@ public class SurfaceViewRenderer extends SurfaceView
     rotatedFrameHeight = 0;
     eglRenderer.init(sharedContext, this /* rendererEvents */, configAttributes, drawer);
     inited = true;
+    released = false;
   }
   /**
    * Block until any pending frame is returned and all GL resources released, even if an interrupt
@@ -78,6 +79,7 @@ public class SurfaceViewRenderer extends SurfaceView
    */
   public void release() {
     eglRenderer.release();
+    inited = false;
     released = true;
   }
   /**

@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -14,9 +15,11 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.lifecycle.lifecycleScope
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.blankj.utilcode.util.ConvertUtils
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
@@ -25,8 +28,6 @@ import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCListener
 import com.wx.rtc.WXRTCSnapshotListener
 import com.wx.rtc.test.R
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.webrtc.SurfaceViewRenderer
 import java.io.File
 
@@ -64,6 +65,11 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        enableEdgeToEdge()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
 
         setContentView(R.layout.activity_main)
 
@@ -236,7 +242,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.endProcess()
         mWXRTC.exitRoom()
         mWXRTC.logout()
-        super.onBackPressed()
+//        super.onBackPressed()
     }
 
     override fun onDestroy() {
@@ -266,6 +272,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.startLocalAudio()
 
 //        mWXRTC.startProcess()
+//        mWXRTC.startRecord()
 
         val speaker = WXRTC.getSpeaker(10000L, "测试")
         speaker.spkId = 1000L

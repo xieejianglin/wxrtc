@@ -33,6 +33,10 @@ internal class RecvCommandMessage {
     var pullUrl: String? = null
 
     @JvmField
+    @SerializedName("available")
+    var available: Boolean? = false
+
+    @JvmField
     @SerializedName("record_file_name")
     var recordFileName: String? = null
 

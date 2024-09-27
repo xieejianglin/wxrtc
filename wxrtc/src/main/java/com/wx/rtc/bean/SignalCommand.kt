@@ -16,6 +16,8 @@ internal annotation class SignalCommand {
         const val LOGIN: String = "login"
         const val LOGOUT: String = "logout"
         const val CALL_CMD: String = "call_cmd"
+        const val VIDEO_AVAILABLE: String = "video_available"
+        const val AUDIO_AVAILABLE: String = "audio_available"
 
 
         /*-------------------接受--------------*/

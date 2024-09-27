@@ -21,6 +21,10 @@ internal class SendCommandMessage {
     var userId: String? = null
 
     @JvmField
+    @SerializedName("available")
+    var available: Boolean? = false
+
+    @JvmField
     @SerializedName("room_msg")
     var roomMsg: RoomMsg? = null
 

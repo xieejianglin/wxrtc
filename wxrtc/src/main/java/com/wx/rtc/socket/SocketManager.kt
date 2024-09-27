@@ -197,6 +197,16 @@ internal class SocketManager {
                                         mListener?.onRemoteUserLeaveRoom(it, 0)
                                     }
                                 }
+                                SignalCommand.VIDEO_AVAILABLE -> {
+                                    message.userId?.let {
+                                        mListener?.onUserVideoAvailable(it, message.available?:false)
+                                    }
+                                }
+                                SignalCommand.AUDIO_AVAILABLE -> {
+                                    message.userId?.let {
+                                        mListener?.onUserAudioAvailable(it, message.available?:false)
+                                    }
+                                }
                                 SignalCommand.START_RECORD_BACK -> {
                                     message.recordFileName?.let {
                                         mListener?.onRecordStart(it)

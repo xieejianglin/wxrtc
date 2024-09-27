@@ -11,4 +11,6 @@ interface WXCallListener {
     fun onUserLineBusy(streamId: String){}
     fun onUserJoin(streamId: String){}
     fun onUserLeave(streamId: String){}
+    fun onUserVideoAvailable(userId: String, available: Boolean) {}
+    fun onUserAudioAvailable(userId: String, available: Boolean) {}
 }

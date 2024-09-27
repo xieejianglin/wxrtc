@@ -381,6 +381,12 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     override fun startLocalVideo(frontCamera: Boolean, renderer: SurfaceViewRenderer?) {
         renderer?.visibility = View.VISIBLE
         mRTCManager.startLocalVideo(frontCamera, renderer)
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = true
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun updateLocalVideo(renderer: SurfaceViewRenderer?) {
@@ -390,10 +396,22 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
 
     override fun stopLocalVideo() {
         mRTCManager.stopLocalVideo()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = false
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun muteLocalVideo(mute: Boolean) {
         mRTCManager.muteLocalVideo(mute)
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = !mute
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun startRemoteVideo(userId: String, renderer: SurfaceViewRenderer?) {
@@ -433,14 +451,32 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     override fun startLocalAudio() {
         setSpeakerOn(speakerOn)
         mRTCManager.startLocalAudio()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.AUDIO_AVAILABLE
+        message.available = true
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun stopLocalAudio() {
         mRTCManager.stopLocalAudio()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.AUDIO_AVAILABLE
+        message.available = false
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun muteLocalAudio(mute: Boolean) {
         mRTCManager.muteLocalAudio(mute)
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.AUDIO_AVAILABLE
+        message.available = !mute
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun muteRemoteAudio(userId: String, mute: Boolean) {
@@ -461,18 +497,42 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
 
     override fun startScreenCapture(encParam: WXRTCVideoEncParam?, renderer: SurfaceViewRenderer?) {
         mRTCManager.startScreenCapture(encParam, renderer)
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = true
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun stopScreenCapture() {
         mRTCManager.stopScreenCapture()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = false
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun pauseScreenCapture() {
         mRTCManager.pauseScreenCapture()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = false
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun resumeScreenCapture() {
         mRTCManager.resumeScreenCapture()
+
+        val message = SendCommandMessage()
+        message.signal = SignalCommand.VIDEO_AVAILABLE
+        message.available = true
+
+        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
 
     override fun setSpeakerOn(speakerOn: Boolean) {
@@ -628,6 +688,16 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.stopPull(userId)
         mRTCListener?.onRemoteUserLeaveRoom(userId, reason)
         mCallListener?.onUserLeave(userId)
+    }
+
+    override fun onUserVideoAvailable(userId: String, available: Boolean) {
+        mRTCListener?.onUserVideoAvailable(userId, available)
+        mCallListener?.onUserVideoAvailable(userId, available)
+    }
+
+    override fun onUserAudioAvailable(userId: String, available: Boolean) {
+        mRTCListener?.onUserAudioAvailable(userId, available)
+        mCallListener?.onUserAudioAvailable(userId, available)
     }
 
     override fun onRecvRoomMsg(userId: String, cmd: String, message: String) {

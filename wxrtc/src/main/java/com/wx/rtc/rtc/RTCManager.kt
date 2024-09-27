@@ -366,6 +366,8 @@ internal class RTCManager : PeerConnectionEvents {
         } else if (params.fillMode == WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT) {
             renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
         }
+//        renderer.setEnableHardwareScaler(false)
+//        renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
         if (params.mirrorType == WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO) {
             if (isLocalrenderer) {
                 renderer.setMirror(useFrontCamera)

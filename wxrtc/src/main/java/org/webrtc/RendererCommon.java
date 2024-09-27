@@ -11,27 +11,30 @@ import android.view.View;
 import android.view.View.MeasureSpec;
 
 public class RendererCommon {
-  private static float BALANCED_VISIBLE_FRACTION = 0.5625F;
+
+  private static float BALANCED_VISIBLE_FRACTION = 0.5625f;
+
+  public static enum ScalingType { SCALE_ASPECT_FIT, SCALE_ASPECT_FILL, SCALE_ASPECT_BALANCED }
 
   public RendererCommon() {
   }
 
   public static float[] getLayoutMatrix(boolean mirror, float videoAspectRatio, float displayAspectRatio) {
-    float scaleX = 1.0F;
-    float scaleY = 1.0F;
+    float scaleX = 1;
+    float scaleY = 1;
+    // Scale X or Y dimension so that video and display size have same aspect ratio.
     if (displayAspectRatio > videoAspectRatio) {
       scaleY = videoAspectRatio / displayAspectRatio;
     } else {
       scaleX = displayAspectRatio / videoAspectRatio;
     }
-
+    // Apply optional horizontal flip.
     if (mirror) {
-      scaleX *= -1.0F;
+      scaleX *= -1;
     }
-
-    float[] matrix = new float[16];
+    final float matrix[] = new float[16];
     Matrix.setIdentityM(matrix, 0);
-    Matrix.scaleM(matrix, 0, scaleX, scaleY, 1.0F);
+    Matrix.scaleM(matrix, 0, scaleX, scaleY, 1);
     adjustOrigin(matrix);
     return matrix;
   }
@@ -73,9 +76,9 @@ public class RendererCommon {
   private static float convertScalingTypeToVisibleFraction(ScalingType scalingType) {
     switch (scalingType) {
       case SCALE_ASPECT_FIT:
-        return 1.0F;
+        return 1.0f;
       case SCALE_ASPECT_FILL:
-        return 0.0F;
+        return 0.0f;
       case SCALE_ASPECT_BALANCED:
         return BALANCED_VISIBLE_FRACTION;
       default:
@@ -84,40 +87,25 @@ public class RendererCommon {
   }
 
   public static Point getDisplaySize(float minVisibleFraction, float videoAspectRatio, int maxDisplayWidth, int maxDisplayHeight) {
-    if (minVisibleFraction != 0.0F && videoAspectRatio != 0.0F) {
-      final int width = Math.min(maxDisplayWidth, Math.round(maxDisplayHeight / minVisibleFraction * videoAspectRatio));
-      final int height = Math.min(maxDisplayHeight, Math.round(maxDisplayWidth / minVisibleFraction / videoAspectRatio));
-      return new Point(width, height);
-    } else {
+    if (minVisibleFraction == 0 || videoAspectRatio == 0) {
       return new Point(maxDisplayWidth, maxDisplayHeight);
     }
-  }
-
-  public static enum ScalingType {
-    SCALE_ASPECT_FIT,
-    SCALE_ASPECT_FILL,
-    SCALE_ASPECT_BALANCED;
-
-    private ScalingType() {
-    }
+    final int width = Math.min(maxDisplayWidth, Math.round(maxDisplayHeight / minVisibleFraction * videoAspectRatio));
+    final int height = Math.min(maxDisplayHeight, Math.round(maxDisplayWidth / minVisibleFraction / videoAspectRatio));
+    return new Point(width, height);
   }
 
   public static class VideoLayoutMeasure {
-    private float visibleFractionMatchOrientation;
-    private float visibleFractionMismatchOrientation;
-
-    public VideoLayoutMeasure() {
-      this.visibleFractionMatchOrientation = RendererCommon.convertScalingTypeToVisibleFraction(RendererCommon.ScalingType.SCALE_ASPECT_BALANCED);
-      this.visibleFractionMismatchOrientation = RendererCommon.convertScalingTypeToVisibleFraction(RendererCommon.ScalingType.SCALE_ASPECT_BALANCED);
-    }
+    private float visibleFractionMatchOrientation = convertScalingTypeToVisibleFraction(ScalingType.SCALE_ASPECT_BALANCED);
+    private float visibleFractionMismatchOrientation = convertScalingTypeToVisibleFraction(ScalingType.SCALE_ASPECT_BALANCED);
 
     public void setScalingType(ScalingType scalingType) {
       this.setScalingType(scalingType, scalingType);
     }
 
     public void setScalingType(ScalingType scalingTypeMatchOrientation, ScalingType scalingTypeMismatchOrientation) {
-      this.visibleFractionMatchOrientation = RendererCommon.convertScalingTypeToVisibleFraction(scalingTypeMatchOrientation);
-      this.visibleFractionMismatchOrientation = RendererCommon.convertScalingTypeToVisibleFraction(scalingTypeMismatchOrientation);
+      this.visibleFractionMatchOrientation = convertScalingTypeToVisibleFraction(scalingTypeMatchOrientation);
+      this.visibleFractionMismatchOrientation = convertScalingTypeToVisibleFraction(scalingTypeMismatchOrientation);
     }
 
     public void setVisibleFraction(float visibleFractionMatchOrientation, float visibleFractionMismatchOrientation) {
@@ -126,31 +114,28 @@ public class RendererCommon {
     }
 
     public Point measure(int widthSpec, int heightSpec, int frameWidth, int frameHeight) {
-      int maxWidth = View.getDefaultSize(Integer.MAX_VALUE, widthSpec);
-      int maxHeight = View.getDefaultSize(Integer.MAX_VALUE, heightSpec);
-      if (frameWidth != 0 && frameHeight != 0 && maxWidth != 0 && maxHeight != 0) {
-        final float frameAspect = frameWidth / (float) frameHeight;
-        final float displayAspect = maxWidth / (float) maxHeight;
-        final float visibleFraction = (frameAspect > 1.0f) == (displayAspect > 1.0f)
-                ? visibleFractionMatchOrientation
-                : visibleFractionMismatchOrientation;
-        Point layoutSize = RendererCommon.getDisplaySize(visibleFraction, frameAspect, maxWidth, maxHeight);
-        if (MeasureSpec.getMode(widthSpec) == MeasureSpec.EXACTLY) {
-          layoutSize.x = maxWidth;
-        }
-
-        if (MeasureSpec.getMode(heightSpec) == MeasureSpec.EXACTLY) {
-          layoutSize.y = maxHeight;
-        }
-
-        return layoutSize;
-      } else {
+      final int maxWidth = View.getDefaultSize(Integer.MAX_VALUE, widthSpec);
+      final int maxHeight = View.getDefaultSize(Integer.MAX_VALUE, heightSpec);
+      if (frameWidth == 0 || frameHeight == 0 || maxWidth == 0 || maxHeight == 0) {
         return new Point(maxWidth, maxHeight);
       }
+      final float frameAspect = frameWidth / (float) frameHeight;
+      final float displayAspect = maxWidth / (float) maxHeight;
+      final float visibleFraction = (frameAspect > 1.0f) == (displayAspect > 1.0f)
+              ? visibleFractionMatchOrientation
+              : visibleFractionMismatchOrientation;
+      final Point layoutSize = getDisplaySize(visibleFraction, frameAspect, maxWidth, maxHeight);
+      if (View.MeasureSpec.getMode(widthSpec) == View.MeasureSpec.EXACTLY) {
+        layoutSize.x = maxWidth;
+      }
+      if (View.MeasureSpec.getMode(heightSpec) == View.MeasureSpec.EXACTLY) {
+        layoutSize.y = maxHeight;
+      }
+      return layoutSize;
     }
   }
 
-  public interface GlDrawer {
+  public static interface GlDrawer {
     void drawOes(int oesTextureId, float[] texMatrix, int frameWidth, int frameHeight,
                  int viewportX, int viewportY, int viewportWidth, int viewportHeight);
     void drawRgb(int textureId, float[] texMatrix, int frameWidth, int frameHeight, int viewportX,

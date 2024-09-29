@@ -616,6 +616,7 @@ internal class RTCManager : PeerConnectionEvents {
     private fun stopPublish() {
         Log.e(TAG, "unpublish onResponse")
         stopLocalVideo()
+        stopScreenCapture()
         stopLocalAudio()
 
         localProxyVideoSink.release()

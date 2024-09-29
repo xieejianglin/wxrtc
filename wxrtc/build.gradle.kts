@@ -34,8 +34,8 @@ android {
     }
     sourceSets["main"].jniLibs.srcDir("libs")
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     publishing {
         singleVariant("release") {
@@ -44,7 +44,7 @@ android {
 }
 
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(11)
     compilerOptions {
         freeCompilerArgs.add("-Xjvm-default=all")
     }

@@ -232,7 +232,7 @@ internal class SocketManager {
                                     message.callMsg?.let {
                                         if (!it.cmd.isNullOrEmpty()) {
                                             mListener?.onRecvCallMsg(
-                                                message.userId,
+                                                it.userId,
                                                 it.cmd!!,
                                                 it.roomId
                                             )

@@ -2,7 +2,7 @@
 compileSdk = "34"
 minSdk = "21"
 targetSdk = "26"
-versionName = "0.0.8.2"
+versionName = "0.0.9"
 
 agp = "8.5.2"
 junit = "4.13.2"

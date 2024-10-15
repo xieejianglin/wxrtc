@@ -198,7 +198,7 @@ internal class RTCManager : PeerConnectionEvents {
         renderer?.apply {
             if (!isInited || isReleased) {
                 init(eglBase.eglBaseContext, null)
-                setEnableHardwareScaler(false /* enabled */)
+                setEnableHardwareScaler(true /* enabled */)
             }
         }
 
@@ -244,7 +244,7 @@ internal class RTCManager : PeerConnectionEvents {
             renderer?.apply {
                 if (!isInited || isReleased) {
                     init(eglBase.eglBaseContext, null)
-                    setEnableHardwareScaler(false /* enabled */)
+                    setEnableHardwareScaler(true /* enabled */)
                 }
             }
 
@@ -259,7 +259,7 @@ internal class RTCManager : PeerConnectionEvents {
             renderer?.apply {
                 if (!isInited || isReleased) {
                     init(eglBase.eglBaseContext, null)
-                    setEnableHardwareScaler(false /* enabled */)
+                    setEnableHardwareScaler(true /* enabled */)
                 }
             }
 
@@ -301,7 +301,7 @@ internal class RTCManager : PeerConnectionEvents {
             renderer?.apply {
                 if (!isInited || isReleased) {
                     init(eglBase.eglBaseContext, null)
-                    setEnableHardwareScaler(false /* enabled */)
+                    setEnableHardwareScaler(true /* enabled */)
                 }
             }
 

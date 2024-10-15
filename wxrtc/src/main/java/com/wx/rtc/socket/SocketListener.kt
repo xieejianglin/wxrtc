@@ -15,7 +15,7 @@ internal interface SocketListener {
     fun onUserVideoAvailable(userId: String, available: Boolean)
     fun onUserAudioAvailable(userId: String, available: Boolean)
     fun onRecvRoomMsg(userId: String, cmd: String, message: String)
-    fun onRecvCallMsg(userId: String, cmd: String, roomId: String)
+    fun onRecvCallMsg(userId: String?, cmd: String, roomId: String?)
     fun onResult(processData: WXRTCDef.ProcessData)
 
     fun onRecordStart(fileName: String)

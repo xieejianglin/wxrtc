@@ -230,11 +230,11 @@ internal class SocketManager {
                                 }
                                 SignalCommand.CALL_MSG_REV -> {
                                     message.callMsg?.let {
-                                        if (!message.userId.isNullOrEmpty() && !it.cmd.isNullOrEmpty() && !it.roomId.isNullOrEmpty()) {
+                                        if (!it.cmd.isNullOrEmpty()) {
                                             mListener?.onRecvCallMsg(
-                                                message.userId!!,
+                                                message.userId,
                                                 it.cmd!!,
-                                                it.roomId!!
+                                                it.roomId
                                             )
                                         }
                                     }

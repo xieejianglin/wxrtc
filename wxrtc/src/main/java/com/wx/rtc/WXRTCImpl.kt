@@ -705,7 +705,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCListener?.onRecvRoomMsg(userId, cmd, message)
     }
 
-    override fun onRecvCallMsg(userId: String, cmd: String, roomId: String) {
+    override fun onRecvCallMsg(userId: String?, cmd: String, roomId: String?) {
         when (cmd) {
             CallCommand.NEW_INVITATION_RECEIVED -> {
                 if (callStatus == WXRTCDef.Status.Calling || callStatus == WXRTCDef.Status.Connected) {
@@ -715,32 +715,32 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
                 callRole = WXRTCDef.Role.Callee
                 callStatus = WXRTCDef.Status.Calling
                 mInviteId = userId
-                mCallListener?.onCallReceived(userId)
+                mCallListener?.onCallReceived(userId!!)
             }
 
             CallCommand.INVITATION_NO_RESP -> {
-                mCallListener?.onUserNoResponse(userId)
+                mCallListener?.onUserNoResponse(userId!!)
                 onCallCancelled(this.userId!!)
             }
 
             CallCommand.INVITATION_REJECTED -> {
-                mCallListener?.onUserReject(userId)
+                mCallListener?.onUserReject(userId!!)
                 onCallCancelled(this.userId!!)
             }
 
             CallCommand.INVITATION_LINE_BUSY -> {
-                mCallListener?.onUserLineBusy(userId)
+                mCallListener?.onUserLineBusy(userId!!)
                 onCallCancelled(this.userId!!)
             }
 
-            CallCommand.INVITATION_CANCELED -> onCallCancelled(userId)
+            CallCommand.INVITATION_CANCELED -> onCallCancelled(userId!!)
             CallCommand.INVITATION_ACCEPTED -> {
                 callStatus = WXRTCDef.Status.Connected
-                mCallListener?.onCallBegin(roomId, callRole)
+                mCallListener?.onCallBegin(roomId!!, callRole)
             }
 
             CallCommand.CALL_END -> {
-                mCallListener?.onCallEnd(roomId, callRole)
+                mCallListener?.onCallEnd(roomId!!, callRole)
                 callRole = WXRTCDef.Role.None
                 callStatus = WXRTCDef.Status.None
             }

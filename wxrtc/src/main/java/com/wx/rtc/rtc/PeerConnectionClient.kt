@@ -389,26 +389,26 @@ internal class PeerConnectionClient(
         }
         if (targetDeviceName.isNotEmpty()) {
             return enumerator.createCapturer(targetDeviceName, object : CameraVideoCapturer.CameraEventsHandler {
-                override fun onCameraError(param1String: String?) {
+                override fun onCameraError(errorDescription: String?) {
                 }
 
                 override fun onCameraDisconnected() {
                 }
 
-                override fun onCameraFreezed(param1String: String?) {
+                override fun onCameraFreezed(errorDescription: String?) {
 
                 }
 
-                override fun onCameraOpening(param1String: String?) {
-                    cameraDeviceName = param1String
+                override fun onCameraOpening(cameraName: String?) {
+                    cameraDeviceName = cameraName
                 }
 
                 override fun onFirstFrameAvailable() {
                 }
 
-                override fun onCameraClosed(param1String: String?) {
+                override fun onCameraClosed(cameraName: String?) {
                     cameraDeviceName?.let {
-                        if (it == param1String) {
+                        if (it == cameraName) {
                             cameraDeviceName = null
                         }
                     }

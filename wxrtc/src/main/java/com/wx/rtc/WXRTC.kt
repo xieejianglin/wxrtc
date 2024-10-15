@@ -101,14 +101,14 @@ abstract class WXRTC {
     fun startRecord(
         mixId: String? = null,
         extraData: String? = null,
-        needAfterAsr: Boolean = false) {
+        needAfterAsr: Boolean? = null) {
         startRecord(mixId, extraData, needAfterAsr,null)
     }
 
     fun startRecord(
         mixId: String? = null,
         extraData: String? = null,
-        needAfterAsr: Boolean = false,
+        needAfterAsr: Boolean? = null,
         hospitalId: String? = null) {
         startRecord(mixId, extraData, needAfterAsr, hospitalId, null)
     }
@@ -116,7 +116,7 @@ abstract class WXRTC {
     abstract fun startRecord(
         mixId: String? = null,
         extraData: String? = null,
-        needAfterAsr: Boolean = false,
+        needAfterAsr: Boolean? = null,
         hospitalId: String? = null,
         spkList: List<Speaker>? = null)
 

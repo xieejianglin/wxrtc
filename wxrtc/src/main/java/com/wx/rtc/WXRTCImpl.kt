@@ -43,7 +43,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     private var mCallListener: WXCallListener? = null
     private var mSnapshotlistener: WXRTCSnapshotListener? = null
 
-    private var currentRecordFile: String? = ""
+    private var currentRecordFile: String? = null
 
     private val gson: Gson = GsonBuilder().disableHtmlEscaping().create()
 
@@ -83,6 +83,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         message.signal = SignalCommand.LOGIN
         message.appId = appId
         message.userId = userId
+        message.connectUrl = socketUrl
 
         mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
@@ -258,7 +259,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         cmd: String,
         mixId: String?,
         extraData: String?,
-        needAfterAsr: Boolean,
+        needAfterAsr: Boolean?,
         hospitalId: String?,
         spkList: List<Speaker>?
     ): RecordCmdDTO {
@@ -277,7 +278,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     override fun startRecord(
         mixId: String?,
         extraData: String?,
-        needAfterAsr: Boolean,
+        needAfterAsr: Boolean?,
         hospitalId: String?,
         spkList: List<Speaker>?
     ) {
@@ -759,7 +760,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
 
     override fun onRecordEnd(fileName: String) {
         if (fileName == currentRecordFile) {
-            currentRecordFile = ""
+            currentRecordFile = null
         }
         mRTCListener?.onRecordEnd(fileName)
     }

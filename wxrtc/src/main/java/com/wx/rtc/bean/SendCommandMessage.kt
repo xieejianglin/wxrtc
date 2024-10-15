@@ -13,6 +13,10 @@ internal class SendCommandMessage {
     var appId: String? = null
 
     @JvmField
+    @SerializedName("connect_url")
+    var connectUrl: String? = null
+
+    @JvmField
     @SerializedName("room_id")
     var roomId: String? = null
 
@@ -22,7 +26,7 @@ internal class SendCommandMessage {
 
     @JvmField
     @SerializedName("available")
-    var available: Boolean? = false
+    var available: Boolean? = null
 
     @JvmField
     @SerializedName("room_msg")
@@ -57,7 +61,7 @@ internal class SendCommandMessage {
         var extraData: String? = null
 
         @SerializedName("need_after_asr")
-        var isNeedAfterAsr: Boolean = false
+        var isNeedAfterAsr: Boolean? = null
 
         @JvmField
         @SerializedName("hospital_id")

@@ -659,7 +659,9 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
 
         isEnterRoom = true
 
-        mRTCManager.startPublish(publishUrl, userId!!)
+        userId?.let {
+            mRTCManager.startPublish(publishUrl, it)
+        }
 
         if (needOnEnterRoom) {
             mRTCListener?.onEnterRoom()

@@ -8,13 +8,14 @@ internal annotation class SignalCommand {
         /*-------------------发送--------------*/
         const val START_PROCESS: String = "start_process"
         const val END_PROCESS: String = "end_process"
-        const val SEND_ROOM_MSG: String = "send_room_msg"
         const val PROCESS_CMD: String = "process_cmd"
         const val RECORD_CMD: String = "record_cmd"
         const val ENTER_ROOM: String = "enter_room"
         const val EXIT_ROOM: String = "exit_room"
         const val LOGIN: String = "login"
         const val LOGOUT: String = "logout"
+        const val SEND_P2P_MSG: String = "send_p2p_msg"
+        const val SEND_ROOM_MSG: String = "send_room_msg"
         const val CALL_CMD: String = "call_cmd"
         const val VIDEO_AVAILABLE: String = "video_available"
         const val AUDIO_AVAILABLE: String = "audio_available"
@@ -30,6 +31,7 @@ internal annotation class SignalCommand {
         const val EXIT_ROOM_BACK: String = "exit_room_back"
         const val REMOTE_ENTER_ROOM: String = "remote_enter_room"
         const val REMOTE_EXIT_ROOM: String = "remote_exit_room"
+        const val P2P_MSG_REV: String = "p2p_msg_rev"
         const val ROOM_MSG_REV: String = "room_msg_rev"
         const val CALL_MSG_REV: String = "call_msg_rev"
     }

@@ -13,4 +13,6 @@ interface WXCallListener {
     fun onUserLeave(streamId: String){}
     fun onUserVideoAvailable(userId: String, available: Boolean) {}
     fun onUserAudioAvailable(userId: String, available: Boolean) {}
+    fun onRecvP2PMsg(fromUserId: String, message: String?) {}
+    fun onRecvRoomMsg(userId: String, cmd: String, message: String?) {}
 }

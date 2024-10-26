@@ -217,13 +217,23 @@ internal class SocketManager {
                                         mListener?.onRecordEnd(it)
                                     }
                                 }
+                                SignalCommand.P2P_MSG_REV -> {
+                                    message.p2pMsg?.let {
+                                        if (!it.from.isNullOrEmpty()) {
+                                            mListener?.onRecvP2PMsg(
+                                                it.from!!,
+                                                it.message
+                                            )
+                                        }
+                                    }
+                                }
                                 SignalCommand.ROOM_MSG_REV -> {
                                     message.roomMsg?.let {
-                                        if (!message.userId.isNullOrEmpty() && !it.cmd.isNullOrEmpty() && !it.message.isNullOrEmpty()) {
+                                        if (!message.userId.isNullOrEmpty() && !it.cmd.isNullOrEmpty()) {
                                             mListener?.onRecvRoomMsg(
                                                 message.userId!!,
                                                 it.cmd!!,
-                                                it.message!!
+                                                it.message
                                             )
                                         }
                                     }

@@ -18,8 +18,6 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import com.blankj.utilcode.util.ConvertUtils
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
@@ -44,6 +42,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val gson = GsonBuilder().disableHtmlEscaping().create()
     private val mWXRTC: WXRTC = WXRTC.getInstance()
     private val mUserId = "123456789"
+    private val mAppId = "2"
+    private val mRoomId = "998839"
     private var localVideoInLocalView = true
     private var isFrontCamera = true
     private var remoteUserId: String? = null
@@ -81,7 +81,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private fun init() {
         mWXRTC.init(this)
 
-        mWXRTC.login("100000", mUserId)
+        mWXRTC.login(mAppId, mUserId)
 
         val param = WXRTCVideoEncParam()
         param.videoMinBitrate = 2800
@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.setRTCListener(this)
 
         val params = WXRTCDef.WXRTCRenderParams()
-        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
         params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
         params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
         mWXRTC.setLocalRenderParams(params)
@@ -109,14 +109,15 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
                 localVideoInLocalView = !localVideoInLocalView
                 if (localVideoInLocalView) {
                     mWXRTC.updateLocalVideo(localVideoView)
+                    remoteVideoView?.visibility = GONE
                     remoteUserId?.let { userId ->
-                        mWXRTC.startRemoteVideo(userId, remoteVideoView)
+                        mWXRTC.updateRemoteVideo(userId, remoteVideoView)
                     }
                 } else {
                     mWXRTC.updateLocalVideo(remoteVideoView)
                     localVideoView?.visibility = View.GONE
                     remoteUserId?.let { userId ->
-                        mWXRTC.startRemoteVideo(userId, localVideoView)
+                        mWXRTC.updateRemoteVideo(userId, localVideoView)
                     }
                 }
             }
@@ -223,7 +224,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     private fun enterRoom() {
-        mWXRTC.enterRoom("123456")
+        mWXRTC.enterRoom(mRoomId)
     }
 
     private fun snapshotVideo(userId: String) {
@@ -237,6 +238,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     override fun onBackPressed() {
+        mWXRTC.stopScreenCapture()
         mWXRTC.stopLocalVideo()
         mWXRTC.stopLocalAudio()
         mWXRTC.endProcess()
@@ -272,7 +274,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.startLocalAudio()
 
 //        mWXRTC.startProcess()
-//        mWXRTC.startRecord()
+//        mWXRTC.startAsr(mAppId, null)
+//        mWXRTC.startRecord("222222", "{\"order_id\":\"222222\"}")
 
         val speaker = WXRTC.getSpeaker(10000L, "测试")
         speaker.spkId = 1000L
@@ -284,6 +287,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     override fun onRemoteUserEnterRoom(userId: String) {
+        val params = WXRTCDef.WXRTCRenderParams()
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
+        params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
+        params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
+        mWXRTC.setRemoteRenderParams(userId, params)
+
         Toast.makeText(this, userId + "进入房间", Toast.LENGTH_SHORT).show()
         remoteUserId = userId
         mWXRTC.startRemoteVideo(userId, remoteVideoView)

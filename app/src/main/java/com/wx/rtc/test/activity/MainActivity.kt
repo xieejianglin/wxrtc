@@ -302,6 +302,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
         val member = WXRTCDef.RoomMemberEntity<String>()
         member.userId = userId
+
+        mWXRTC.sendP2PMsg(userId, "hello world!")
     }
 
     override fun onRemoteUserLeaveRoom(userId: String, reason: Int) {
@@ -310,7 +312,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.stopRemoteVideo(userId)
     }
 
-    override fun onRecvRoomMsg(userId: String, cmd: String, message: String) {
+    override fun onRecvP2PMsg(fromUserId: String, message: String?) {
+        Toast.makeText(this, "${fromUserId}发送了单聊消息：$message", Toast.LENGTH_LONG)
+            .show()
+    }
+
+    override fun onRecvRoomMsg(userId: String, cmd: String, message: String?) {
         Toast.makeText(this, "${userId}发送了房间消息：$cmd, $message", Toast.LENGTH_LONG)
             .show()
     }

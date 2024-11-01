@@ -7,16 +7,22 @@ import com.wx.rtc.WXRTCDef.Speaker
 import org.webrtc.SurfaceViewRenderer
 
 abstract class WXRTC {
-    var mAppId: String? = null
-        protected set
-    var mUserId: String? = null
-        protected set
-    var mRoomId: String = ""
-        protected set
+    protected var mAppId: String? = null
+    protected var mUserId: String? = null
+    protected var mRoomId: String = ""
     var isLogin: Boolean = false
         protected set
     var isEnterRoom: Boolean = false
         protected set
+
+    val appId: String?
+        get() = mAppId
+
+    val userId: String?
+        get() = mUserId
+
+    val roomId: String
+        get() = mRoomId
 
     abstract fun init(context: Context)
 
@@ -213,8 +219,8 @@ abstract class WXRTC {
 
         @JvmStatic
         @JvmOverloads
-        fun getInstance(url: String? = null): WXRTC {
-            return WXRTCImpl.getInstance(url)
+        fun getInstance(socketUrl: String? = null, networkType: Int? = null): WXRTC {
+            return WXRTCImpl.getInstance(socketUrl, networkType)
         }
 
         @JvmStatic

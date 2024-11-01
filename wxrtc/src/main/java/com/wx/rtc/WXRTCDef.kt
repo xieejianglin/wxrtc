@@ -8,6 +8,13 @@ import org.webrtc.SurfaceViewRenderer
  */
 class WXRTCDef {
     companion object {
+
+        const val WXRTC_NETWORK_TYPE_PUBLIC: Int = 1
+
+        const val WXRTC_NETWORK_TYPE_PROTECTED: Int = 2
+
+        const val WXRTC_NETWORK_TYPE_PRIVATE: Int = 3
+
         const val WXRTC_VIDEO_RESOLUTION_120_120: Int = 1
 
         const val WXRTC_VIDEO_RESOLUTION_160_160: Int = 3

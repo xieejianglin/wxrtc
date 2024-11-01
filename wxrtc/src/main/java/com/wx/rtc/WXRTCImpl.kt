@@ -54,7 +54,7 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     override fun init(context: Context) {
         this.mContext = context
 
-        mSocketManager.init(context, socketUrl)
+        mSocketManager.init(context, mSocketUrl)
         mSocketManager.setListener(this)
 
         mRTCManager.init(context)
@@ -83,7 +83,8 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         message.signal = SignalCommand.LOGIN
         message.appId = appId
         message.userId = userId
-        message.connectUrl = socketUrl
+        message.connectUrl = mSocketUrl
+        message.networkType = mNetworkType
 
         mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
     }
@@ -871,15 +872,17 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         private val TAG: String = WXRTCImpl::class.java.name
 
         private var INSTANCE: WXRTCImpl? = null
-        private var socketUrl: String? = null
+        private var mSocketUrl: String? = null
+        private var mNetworkType: Int? = null
 
         @JvmStatic
         @JvmOverloads
-        fun getInstance(url: String? = null): WXRTC {
+        fun getInstance(socketUrl: String? = null, networkType: Int? = null): WXRTC {
             synchronized(WXRTCImpl.Companion::class.java) {
                 if (INSTANCE == null) {
                     INSTANCE = WXRTCImpl()
-                    socketUrl = url
+                    mSocketUrl = socketUrl
+                    mNetworkType = networkType
                 }
                 return INSTANCE!!
             }

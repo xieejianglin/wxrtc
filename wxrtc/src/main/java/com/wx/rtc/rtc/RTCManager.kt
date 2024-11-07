@@ -59,6 +59,7 @@ internal class RTCManager : PeerConnectionEvents {
     private var publishVideoSendEnabled = false
     private var publishVideoMute = false
     private var publishAudioMute = false
+    private var isScreenCapture = false
     private var publishRenderParams: WXRTCRenderParams = WXRTCRenderParams()
     private var remoteVideoAllMute = false
     private var remoteAudioAllMute = false
@@ -394,7 +395,7 @@ internal class RTCManager : PeerConnectionEvents {
 //        renderer.setEnableHardwareScaler(false)
 //        renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
         if (params.mirrorType == WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO) {
-            if (isLocalrenderer) {
+            if (!isScreenCapture && isLocalrenderer) {
                 renderer.setMirror(useFrontCamera)
             } else {
                 renderer.setMirror(false)
@@ -490,6 +491,7 @@ internal class RTCManager : PeerConnectionEvents {
 
     fun startScreenCapture(encParam: WXRTCVideoEncParam?, renderer: SurfaceViewRenderer?) {
         publishVideoSendEnabled = true
+        isScreenCapture = true
         publishPCClient?.startScreenCapture()
         setLocalRenderer(renderer)
         encParam?.let {
@@ -505,6 +507,7 @@ internal class RTCManager : PeerConnectionEvents {
 
     fun stopScreenCapture() {
         publishVideoSendEnabled = false
+        isScreenCapture = false
         publishPCClient?.stopScreenCapture()
         setLocalRenderer(null)
     }

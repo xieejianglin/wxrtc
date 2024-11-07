@@ -41,6 +41,10 @@ internal class RecvCommandMessage {
     var recordFileName: String? = null
 
     @JvmField
+    @SerializedName("p2p_msg")
+    var p2pMsg: P2PMsg? = null
+
+    @JvmField
     @SerializedName("room_msg")
     var roomMsg: RoomMsg? = null
 

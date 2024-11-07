@@ -17,6 +17,10 @@ internal class SendCommandMessage {
     var connectUrl: String? = null
 
     @JvmField
+    @SerializedName("network_type")
+    var networkType: Int? = null
+
+    @JvmField
     @SerializedName("room_id")
     var roomId: String? = null
 
@@ -27,6 +31,10 @@ internal class SendCommandMessage {
     @JvmField
     @SerializedName("available")
     var available: Boolean? = null
+
+    @JvmField
+    @SerializedName("p2p_msg")
+    var p2pMsg: P2PMsg? = null
 
     @JvmField
     @SerializedName("room_msg")

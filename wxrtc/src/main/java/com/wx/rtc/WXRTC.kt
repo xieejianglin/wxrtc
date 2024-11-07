@@ -1,45 +1,28 @@
 package com.wx.rtc
 
 import android.content.Context
-import android.media.AudioManager
-import android.text.TextUtils
-import android.util.Log
-import android.view.View
-import android.widget.Toast
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTCDef.WXRTCRenderParams
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCDef.Speaker
-import com.wx.rtc.bean.CallCommand
-import com.wx.rtc.bean.ProcessCommand
-import com.wx.rtc.bean.RecordCommand
-import com.wx.rtc.bean.RoomMsg
-import com.wx.rtc.bean.SendCommandMessage
-import com.wx.rtc.bean.SendCommandMessage.CallCmdDTO
-import com.wx.rtc.bean.SendCommandMessage.ProcessCmdListDTO
-import com.wx.rtc.bean.SendCommandMessage.RecordCmdDTO
-import com.wx.rtc.bean.SignalCommand
-import com.wx.rtc.rtc.RTCListener
-import com.wx.rtc.rtc.RTCManager
-import com.wx.rtc.socket.SocketListener
-import com.wx.rtc.socket.SocketManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.webrtc.SurfaceViewRenderer
-import java.io.File
-import java.lang.ref.WeakReference
 
 abstract class WXRTC {
-    var userId: String? = null
-        protected set
-    var roomId: String = ""
-        protected set
+    protected var mAppId: String? = null
+    protected var mUserId: String? = null
+    protected var mRoomId: String = ""
     var isLogin: Boolean = false
         protected set
     var isEnterRoom: Boolean = false
         protected set
+
+    val appId: String?
+        get() = mAppId
+
+    val userId: String?
+        get() = mUserId
+
+    val roomId: String
+        get() = mRoomId
 
     abstract fun init(context: Context)
 
@@ -76,6 +59,8 @@ abstract class WXRTC {
     abstract fun hangupCall()
 
     abstract fun hangupCall(inviteId: String)
+
+    abstract fun sendP2PMsg(userId: String, msg: String)
 
     abstract fun sendRoomMsg(cmd: String, msg: String)
 
@@ -234,8 +219,8 @@ abstract class WXRTC {
 
         @JvmStatic
         @JvmOverloads
-        fun getInstance(url: String? = null): WXRTC {
-            return WXRTCImpl.getInstance(url)
+        fun getInstance(socketUrl: String? = null, networkType: Int? = null): WXRTC {
+            return WXRTCImpl.getInstance(socketUrl, networkType)
         }
 
         @JvmStatic

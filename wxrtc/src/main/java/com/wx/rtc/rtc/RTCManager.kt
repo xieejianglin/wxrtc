@@ -113,7 +113,8 @@ internal class RTCManager : PeerConnectionEvents {
             this.setRemoteVideoTrackEnabled(false)
             this.createPeerConnectionFactory(options)
 
-            localProxyVideoSink.setTarget(userId, localRenderer)
+//            localProxyVideoSink.setTarget(userId, localRenderer)
+            setLocalRenderer(localRenderer)
 
             setRTCVideoParam(mVideoEncParam)
 
@@ -191,8 +192,16 @@ internal class RTCManager : PeerConnectionEvents {
     private fun setLocalRenderer(renderer: SurfaceViewRenderer?) {
         localProxyVideoSink.setTarget(publishUserId, renderer)
 
-        if (this.localRenderer != null && renderer != null && this.localRenderer === renderer) {
-            return
+        if (renderer != null) {
+            if (this.localRenderer != null && this.localRenderer === renderer) {
+                return
+            }
+
+            for (pcm in this.pcManagers) {
+                if (pcm.videoSink != null && pcm.videoSink!!.target != null && pcm.videoSink!!.target === renderer) {
+                    pcm.videoSink!!.setTarget(pcm.userId, null)
+                }
+            }
         }
 
         renderer?.apply {
@@ -230,8 +239,16 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     fun startRemoteVideo(userId: String, renderer: SurfaceViewRenderer?) {
-        if (localRenderer != null && renderer === localRenderer) {
+        if (localRenderer != null && localRenderer === renderer) {
             setLocalRenderer(null)
+        }
+
+        if (renderer != null) {
+            for (pcm in this.pcManagers) {
+                if (pcm.userId != userId && pcm.videoSink != null && pcm.videoSink!!.target != null && pcm.videoSink!!.target === renderer) {
+                    pcm.videoSink!!.setTarget(pcm.userId, null)
+                }
+            }
         }
 
         var pcm = getPeerConnectionManagerByUserId(userId)
@@ -287,8 +304,16 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     fun updateRemoteVideo(userId: String, renderer: SurfaceViewRenderer?) {
-        if (localRenderer != null && renderer === localRenderer) {
+        if (localRenderer != null && localRenderer === renderer) {
             setLocalRenderer(null)
+        }
+
+        if (renderer != null) {
+            for (pcm in this.pcManagers) {
+                if (pcm.userId != userId && pcm.videoSink != null && pcm.videoSink!!.target != null && pcm.videoSink!!.target === renderer) {
+                    pcm.videoSink!!.setTarget(pcm.userId, null)
+                }
+            }
         }
 
         var pcm = getPeerConnectionManagerByUserId(userId)

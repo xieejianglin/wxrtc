@@ -1,12 +1,13 @@
 package com.wx.rtc.socket
 
 import android.content.Context
-import android.text.TextUtils
 import android.util.Log
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.wx.rtc.Config
+import com.wx.rtc.WXRTCDef
+import com.wx.rtc.bean.CallMsg
+import com.wx.rtc.bean.P2PMsg
 import com.wx.rtc.bean.RecvCommandMessage
+import com.wx.rtc.bean.RoomMsg
 import com.wx.rtc.bean.SignalCommand
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import okio.ByteString
+import org.json.JSONObject
 import java.util.LinkedList
 import java.util.concurrent.TimeUnit
 
@@ -36,8 +38,6 @@ internal class SocketManager {
     private var mReconnectJob: Job? = null
     private var mContext: Context? = null
     private var mListener: SocketListener? = null
-
-    private val gson: Gson = GsonBuilder().disableHtmlEscaping().create()
 
     fun init(context: Context, url: String?) {
         this.mContext = context
@@ -159,7 +159,175 @@ internal class SocketManager {
                     return
                 }
                 Log.d(TAG, "enter WebSocketListener onMessage(), String: $text")
-                val message = gson.fromJson(text, RecvCommandMessage::class.java)
+//                val message = gson.fromJson(text, RecvCommandMessage::class.java)
+
+                val message = RecvCommandMessage()
+                var root:JSONObject? = null
+                try {
+                    root = JSONObject(text)
+
+                    if (root.has("code")) {
+                        message.code = root.getInt("code")
+                    }
+                    if (root.has("message")) {
+                        message.message = root.getString("message")
+                    }
+                    if (root.has("signal")) {
+                        message.signal = root.getString("signal")
+                    }
+                    if (root.has("publish_url")) {
+                        message.publishUrl = root.getString("publish_url")
+                    }
+                    if (root.has("unpublish_url")) {
+                        message.unpublishUrl = root.getString("unpublish_url")
+                    }
+                    if (root.has("user_id")) {
+                        message.userId = root.getString("user_id")
+                    }
+                    if (root.has("pull_url")) {
+                        message.pullUrl = root.getString("pull_url")
+                    }
+                    if (root.has("available")) {
+                        message.available = root.getBoolean("available")
+                    }
+                    if (root.has("record_file_name")) {
+                        message.recordFileName = root.getString("record_file_name")
+                    }
+                    if (root.has("p2p_msg")) {
+                        val msgObject = root.getJSONObject("p2p_msg")
+                        val p2PMsg = P2PMsg()
+                        if (msgObject.has("from")) {
+                            p2PMsg.from = msgObject.getString("from")
+                        }
+                        if (msgObject.has("to")) {
+                            p2PMsg.to = msgObject.getString("to")
+                        }
+                        if (msgObject.has("message")) {
+                            p2PMsg.message = msgObject.getString("message")
+                        }
+                        message.p2pMsg = p2PMsg
+                    }
+                    if (root.has("room_msg")) {
+                        val msgObject = root.getJSONObject("room_msg")
+                        val roomMsg = RoomMsg()
+                        if (msgObject.has("cmd")) {
+                            roomMsg.cmd = msgObject.getString("cmd")
+                        }
+                        if (msgObject.has("message")) {
+                            roomMsg.message = msgObject.getString("message")
+                        }
+                        message.roomMsg = roomMsg
+                    }
+                    if (root.has("call_msg")) {
+                        val msgObject = root.getJSONObject("call_msg")
+                        val callMsg = CallMsg()
+                        if (msgObject.has("cmd")) {
+                            callMsg.cmd = msgObject.getString("cmd")
+                        }
+                        if (msgObject.has("user_id")) {
+                            callMsg.userId = msgObject.getString("user_id")
+                        }
+                        if (msgObject.has("room_id")) {
+                            callMsg.roomId = msgObject.getString("room_id")
+                        }
+                        message.callMsg = callMsg
+                    }
+                    if (root.has("result")) {
+                        val msgObject = root.getJSONObject("result")
+                        val resultData = WXRTCDef.ProcessData()
+                        if (msgObject.has("rst")) {
+                            resultData.rst = msgObject.getInt("rst")
+                        }
+                        if (msgObject.has("need_focus")) {
+                            resultData.need_focus = msgObject.getInt("need_focus")
+                        }
+                        if (msgObject.has("focus_point")) {
+                            val array = msgObject.getJSONArray("focus_point")
+                            val points = ArrayList<Float>()
+                            for (i in 0 until array.length()) {
+                                points.add(array.getDouble(i).toFloat())
+                            }
+                            resultData.focus_point = points
+                        }
+                        if (msgObject.has("drop_speed")) {
+                            resultData.drop_speed = msgObject.getString("drop_speed")
+                        }
+                        if (msgObject.has("scale")) {
+                            resultData.scale = msgObject.getString("scale")
+                        }
+                        if (msgObject.has("need_magnify")) {
+                            resultData.need_magnify = msgObject.getInt("need_magnify")
+                        }
+                        if (msgObject.has("barcodeDate")) {
+                            resultData.barcodeDate = msgObject.getString("barcodeDate")
+                        }
+                        if (msgObject.has("high_pressure")) {
+                            resultData.high_pressure = msgObject.getString("high_pressure")
+                        }
+                        if (msgObject.has("low_pressure")) {
+                            resultData.low_pressure = msgObject.getString("low_pressure")
+                        }
+                        if (msgObject.has("pulse")) {
+                            resultData.pulse = msgObject.getString("pulse")
+                        }
+                        if (msgObject.has("has_csf")) {
+                            resultData.has_csf = msgObject.getInt("has_csf")
+                        }
+                        if (msgObject.has("right_eye")) {
+                            val eyeObject = msgObject.getJSONObject("right_eye")
+                            val eyeMark = WXRTCDef.EyeMark()
+                            if (eyeObject.has("normal")) {
+                                eyeMark.normal = eyeObject.getInt("normal")
+                            }
+                            if (eyeObject.has("femtosecond")) {
+                                eyeMark.femtosecond = eyeObject.getInt("femtosecond")
+                            }
+                            if (eyeObject.has("astigmatism")) {
+                                eyeMark.astigmatism = eyeObject.getInt("astigmatism")
+                            }
+                            resultData.right_eye = eyeMark
+                        }
+                        if (msgObject.has("left_eye")) {
+                            val eyeObject = msgObject.getJSONObject("left_eye")
+                            val eyeMark = WXRTCDef.EyeMark()
+                            if (eyeObject.has("normal")) {
+                                eyeMark.normal = eyeObject.getInt("normal")
+                            }
+                            if (eyeObject.has("femtosecond")) {
+                                eyeMark.femtosecond = eyeObject.getInt("femtosecond")
+                            }
+                            if (eyeObject.has("astigmatism")) {
+                                eyeMark.astigmatism = eyeObject.getInt("astigmatism")
+                            }
+                            resultData.left_eye = eyeMark
+                        }
+                        if (msgObject.has("pid")) {
+                            resultData.pid = msgObject.getString("pid")
+                        }
+                        if (msgObject.has("asr_result")) {
+                            resultData.asr_result = msgObject.getString("asr_result")
+                        }
+                        if (msgObject.has("gesture")) {
+                            resultData.gesture = msgObject.getInt("gesture")
+                        }
+                        if (msgObject.has("oxygen_saturation")) {
+                            resultData.oxygen_saturation = msgObject.getString("oxygen_saturation")
+                        }
+                        if (msgObject.has("weight_scale")) {
+                            resultData.weight_scale = msgObject.getString("weight_scale")
+                        }
+                        if (msgObject.has("respiratory_rate")) {
+                            resultData.respiratory_rate = msgObject.getString("respiratory_rate")
+                        }
+                        if (msgObject.has("capture_image_url")) {
+                            resultData.capture_image_url = msgObject.getString("capture_image_url")
+                        }
+                        message.result = resultData
+                    }
+                } catch (throwable: Throwable) {
+                    mListener?.onError(0, "解析socket返回异常")
+                    return
+                }
 
                 CoroutineScope(Dispatchers.Main).launch {
                     if (message.code == 1) {

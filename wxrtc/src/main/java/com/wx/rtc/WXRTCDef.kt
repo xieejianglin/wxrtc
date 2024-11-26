@@ -1,6 +1,5 @@
 package com.wx.rtc
 
-import com.google.gson.annotations.SerializedName
 import org.webrtc.SurfaceViewRenderer
 
 /**
@@ -215,11 +214,9 @@ class WXRTCDef {
 
     class Speaker {
         @JvmField
-        @SerializedName("spk_id")
         var spkId: Long? = null
 
         @JvmField
-        @SerializedName("spk_name")
         var spkName: String? = null
     }
 

@@ -56,7 +56,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.annotation.jvm)
     implementation(libs.okhttp)
-    implementation(libs.gson)
 }
 
 

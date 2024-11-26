@@ -6,20 +6,12 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTCDef.WXRTCRenderParams
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCDef.Speaker
 import com.wx.rtc.bean.CallCommand
-import com.wx.rtc.bean.P2PMsg
 import com.wx.rtc.bean.ProcessCommand
 import com.wx.rtc.bean.RecordCommand
-import com.wx.rtc.bean.RoomMsg
-import com.wx.rtc.bean.SendCommandMessage
-import com.wx.rtc.bean.SendCommandMessage.CallCmdDTO
-import com.wx.rtc.bean.SendCommandMessage.ProcessCmdListDTO
-import com.wx.rtc.bean.SendCommandMessage.RecordCmdDTO
 import com.wx.rtc.bean.SignalCommand
 import com.wx.rtc.rtc.RTCListener
 import com.wx.rtc.rtc.RTCManager
@@ -44,8 +36,6 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     private var mSnapshotlistener: WXRTCSnapshotListener? = null
 
     private var currentRecordFile: String? = null
-
-    private val gson: Gson = GsonBuilder().disableHtmlEscaping().create()
 
     private val mSocketManager = SocketManager()
 
@@ -79,50 +69,54 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
 
         mSocketManager.startConnect()
 
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.LOGIN
-        message.appId = appId
-        message.userId = userId
-        message.connectUrl = mSocketUrl
-        message.networkType = mNetworkType
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.LOGIN
+//        message.appId = appId
+//        message.userId = userId
+//        message.connectUrl = mSocketUrl
+//        message.networkType = mNetworkType
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        val message = mNetworkType?.let {
+            "{\"signal\":\"${SignalCommand.LOGIN}\", \"app_id\":\"$appId\", \"user_id\":\"$userId\", \"connect_url\":\"$mSocketUrl\", \"network_type\":$it}"
+        } ?: "{\"signal\":\"${SignalCommand.LOGIN}\", \"app_id\":\"$appId\", \"user_id\":\"$userId\", \"connect_url\":\"$mSocketUrl\"}"
+
+        mSocketManager.sendWebSocketMessage(message)
     }
 
     override fun logout() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.LOGOUT
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.LOGOUT
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.LOGOUT}\"}")
     }
 
     override fun enterRoom(roomId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.ENTER_ROOM
-        message.roomId = roomId
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.ENTER_ROOM
+//        message.roomId = roomId
         this.mRoomId = roomId
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.ENTER_ROOM}\", \"room_id\":\"$roomId\"}")
     }
 
     override fun exitRoom() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.EXIT_ROOM
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.EXIT_ROOM
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.EXIT_ROOM}\"}")
     }
 
     override fun inviteCall(inviteId: String, roomId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.INVITE
+//        cmd.userId = inviteId
+//        cmd.roomId = roomId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.INVITE
-        cmd.userId = inviteId
-        cmd.roomId = roomId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\", \"call_cmd\":{\"cmd\":\"${CallCommand.INVITE}\",\"user_id\":\"$inviteId\",\"room_id\":\"$roomId\"}}")
 
         this.mInviteId = inviteId
         this.callStatus = WXRTCDef.Status.Calling
@@ -136,15 +130,15 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun cancelInvitation(inviteId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.CANCEL
+//        cmd.userId = inviteId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.CANCEL
-        cmd.userId = inviteId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\",\"call_cmd\":{\"cmd\":\"${CallCommand.CANCEL}\", \"user_id\":\"$inviteId\"}}")
 
         this.callStatus = WXRTCDef.Status.None
         this.callRole = WXRTCDef.Role.None
@@ -156,15 +150,15 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun acceptInvitation(inviteId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.ACCEPT
+//        cmd.userId = inviteId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.ACCEPT
-        cmd.userId = inviteId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\",\"call_cmd\":{\"cmd\":\"${CallCommand.ACCEPT}\", \"user_id\":\"$inviteId\"}}")
 
         this.callStatus = WXRTCDef.Status.Connected
     }
@@ -176,15 +170,15 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun rejectInvitation(inviteId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.REJECT
+//        cmd.userId = inviteId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.REJECT
-        cmd.userId = inviteId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\",\"call_cmd\":{\"cmd\":\"${CallCommand.REJECT}\", \"user_id\":\"$inviteId\"}}")
 
         this.callStatus = WXRTCDef.Status.None
         this.callRole = WXRTCDef.Role.None
@@ -192,15 +186,15 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun invitationLineBusy(inviteId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.LINE_BUSY
+//        cmd.userId = inviteId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.LINE_BUSY
-        cmd.userId = inviteId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\",\"call_cmd\":{\"cmd\":\"${CallCommand.LINE_BUSY}\", \"user_id\":\"$inviteId\"}}")
     }
 
     override fun hangupCall(){
@@ -210,15 +204,15 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun hangupCall(inviteId: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.CALL_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.CALL_CMD
+//
+//        val cmd = CallCmdDTO()
+//        cmd.cmd = CallCommand.HANG_UP
+//        cmd.userId = inviteId
+//        message.callCmd = cmd
 
-        val cmd = CallCmdDTO()
-        cmd.cmd = CallCommand.HANG_UP
-        cmd.userId = inviteId
-        message.callCmd = cmd
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.CALL_CMD}\",\"call_cmd\":{\"cmd\":\"${CallCommand.HANG_UP}\", \"user_id\":\"$inviteId\"}}")
 
         this.callStatus = WXRTCDef.Status.None
         this.callRole = WXRTCDef.Role.None
@@ -226,16 +220,16 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
     }
 
     override fun sendP2PMsg(userId: String, msg: String) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.SEND_P2P_MSG
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.SEND_P2P_MSG
+//
+//        val p2pMsg = P2PMsg()
+//        p2pMsg.from = mUserId
+//        p2pMsg.to = userId
+//        p2pMsg.message = msg
+//        message.p2pMsg = p2pMsg
 
-        val p2pMsg = P2PMsg()
-        p2pMsg.from = mUserId
-        p2pMsg.to = userId
-        p2pMsg.message = msg
-        message.p2pMsg = p2pMsg
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.SEND_P2P_MSG}\",\"p2p_msg\":{\"from\":\"$mUserId\", \"to\":\"$userId\", \"message\":\"$msg\"}}")
     }
 
     override fun sendRoomMsg(cmd: String, msg: String) {
@@ -244,29 +238,29 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
             return
         }
 
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.SEND_ROOM_MSG
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.SEND_ROOM_MSG
+//
+//        val roomMsg = RoomMsg()
+//        roomMsg.cmd = cmd
+//        roomMsg.message = msg
+//        message.roomMsg = roomMsg
 
-        val roomMsg = RoomMsg()
-        roomMsg.cmd = cmd
-        roomMsg.message = msg
-        message.roomMsg = roomMsg
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.SEND_ROOM_MSG}\",\"room_msg\":{\"cmd\":\"$cmd\", \"message\":\"$msg\"}}")
     }
 
     override fun startProcess() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.START_PROCESS
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.START_PROCESS
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.START_PROCESS}\"}")
     }
 
     override fun endProcess() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.END_PROCESS
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.END_PROCESS
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.END_PROCESS}\"}")
     }
 
     private fun getRecordCommand(
@@ -276,17 +270,56 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         needAfterAsr: Boolean?,
         hospitalId: String?,
         spkList: List<Speaker>?
-    ): RecordCmdDTO {
-        val dto = RecordCmdDTO()
-        dto.cmd = cmd
-        dto.endFileName = currentRecordFile
-        dto.mixId = mixId
-        dto.extraData = extraData
-        dto.isNeedAfterAsr = needAfterAsr
-        dto.hospitalId = hospitalId
-        dto.spkList = spkList
+    ): String {
+//        val dto = RecordCmdDTO()
+//        dto.cmd = cmd
+//        dto.endFileName = currentRecordFile
+//        dto.mixId = mixId
+//        dto.extraData = extraData
+//        dto.isNeedAfterAsr = needAfterAsr
+//        dto.hospitalId = hospitalId
+//        dto.spkList = spkList
 
-        return dto
+        val sb = StringBuilder()
+        sb.append("{\"cmd\":\"$cmd\"")
+        currentRecordFile?.let {
+            sb.append(",\"end_file_name\":\"$it\"")
+        }
+        mixId?.let {
+            sb.append(",\"mix_id\":\"$it\"")
+        }
+        extraData?.let {
+            sb.append(",\"extra_data\":\"${it.replace("\"", "\\\"")}\"")
+        }
+        needAfterAsr?.let {
+            sb.append(",\"need_after_asr\":$it")
+        }
+        hospitalId?.let {
+            sb.append(",\"hospital_id\":\"$it\"")
+        }
+        spkList?.let { list->
+            sb.append(",\"spk_list\":[")
+            list.forEachIndexed { index, item ->
+                if (index > 0){
+                    sb.append(",")
+                }
+                sb.append("{")
+                item.spkId?.let {
+                    sb.append("\"spk_id\":\"${item.spkId}\"")
+                }
+                item.spkName?.let {
+                    if (item.spkId != null) {
+                        sb.append(",")
+                    }
+                    sb.append("\"spk_name\":\"${item.spkName}\"")
+                }
+                sb.append("}")
+            }
+            sb.append("]")
+        }
+        sb.append("}")
+
+        return sb.toString()
     }
 
     override fun startRecord(
@@ -296,19 +329,28 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         hospitalId: String?,
         spkList: List<Speaker>?
     ) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.RECORD_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.RECORD_CMD
+//
+//        message.recordCmd = getRecordCommand(
+//            RecordCommand.START_RECORD,
+//            mixId,
+//            extraData,
+//            needAfterAsr,
+//            hospitalId,
+//            spkList
+//        )
 
-        message.recordCmd = getRecordCommand(
-            RecordCommand.START_RECORD,
-            mixId,
-            extraData,
-            needAfterAsr,
-            hospitalId,
-            spkList
-        )
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.RECORD_CMD}\", \"record_cmd\":${
+            getRecordCommand(
+                RecordCommand.START_RECORD,
+                mixId,
+                extraData,
+                needAfterAsr,
+                hospitalId,
+                spkList
+            )
+        }}")
     }
 
     override fun endAndStartRecord(
@@ -318,79 +360,144 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         hospitalId: String?,
         spkList: List<Speaker>?
     ) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.RECORD_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.RECORD_CMD
+//
+//        message.recordCmd = getRecordCommand(
+//            RecordCommand.END_AND_START_RECORD,
+//            mixId,
+//            extraData,
+//            needAfterAsr,
+//            hospitalId,
+//            spkList
+//        )
 
-        message.recordCmd = getRecordCommand(
-            RecordCommand.END_AND_START_RECORD,
-            mixId,
-            extraData,
-            needAfterAsr,
-            hospitalId,
-            spkList
-        )
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.RECORD_CMD}\", \"record_cmd\":${
+            getRecordCommand(
+                RecordCommand.END_AND_START_RECORD,
+                mixId,
+                extraData,
+                needAfterAsr,
+                hospitalId,
+                spkList
+            )
+        }}")
     }
 
     override fun endRecord() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.RECORD_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.RECORD_CMD
+//
+//        val dto = RecordCmdDTO()
+//        dto.cmd = RecordCommand.END_RECORD
+//        message.recordCmd = dto
 
-        val dto = RecordCmdDTO()
-        dto.cmd = RecordCommand.END_RECORD
-        message.recordCmd = dto
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.RECORD_CMD}\", \"record_cmd\":{\"cmd\":\"${RecordCommand.END_RECORD}\"}}")
     }
 
     override fun startAsr(hospitalId: String?, spkList: List<Speaker>?) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.PROCESS_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.PROCESS_CMD
 
-        val dto = ProcessCmdListDTO()
-        dto.type = "audio"
-        dto.cmd = ProcessCommand.START_ASR
-        dto.hospitalId = hospitalId
-        dto.spkList = spkList
+//        val dto = ProcessCmdListDTO()
+//        dto.type = "audio"
+//        dto.cmd = ProcessCommand.START_ASR
+//        dto.hospitalId = hospitalId
+//        dto.spkList = spkList
+//
+//        val list: MutableList<ProcessCmdListDTO> = ArrayList()
+//        list.add(dto)
+//        message.processCmdList = list
 
-        val list: MutableList<ProcessCmdListDTO> = ArrayList()
-        list.add(dto)
-        message.processCmdList = list
+        val sb = StringBuilder()
+        sb.append("{\"signal\":\"${SignalCommand.PROCESS_CMD}\"")
+        sb.append(", \"process_cmd_list\":[{\"type\":\"audio\", \"cmd\":\"${ProcessCommand.START_ASR}\"")
+        hospitalId?.let {
+            sb.append(",\"hospital_id\":\"$it\"")
+        }
+        spkList?.let { list->
+            sb.append(",\"spk_list\":[")
+            list.forEachIndexed { index, item ->
+                if (index > 0){
+                    sb.append(",")
+                }
+                sb.append("{")
+                item.spkId?.let {
+                    sb.append("\"spk_id\":\"${item.spkId}\"")
+                }
+                item.spkName?.let {
+                    if (item.spkId != null) {
+                        sb.append(",")
+                    }
+                    sb.append("\"spk_name\":\"${item.spkName}\"")
+                }
+                sb.append("}")
+            }
+            sb.append("]")
+        }
+        sb.append("}]}")
 
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage(sb.toString())
     }
 
     override fun endAndStartAsr(hospitalId: String?, spkList: List<Speaker>?) {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.PROCESS_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.PROCESS_CMD
+//
+//        val dto = ProcessCmdListDTO()
+//        dto.type = "audio"
+//        dto.cmd = ProcessCommand.END_AND_START_ASR
+//        dto.hospitalId = hospitalId
+//        dto.spkList = spkList
+//
+//        val list: MutableList<ProcessCmdListDTO> = ArrayList()
+//        list.add(dto)
+//        message.processCmdList = list
 
-        val dto = ProcessCmdListDTO()
-        dto.type = "audio"
-        dto.cmd = ProcessCommand.END_AND_START_ASR
-        dto.hospitalId = hospitalId
-        dto.spkList = spkList
+        val sb = StringBuilder()
+        sb.append("{\"signal\":\"${SignalCommand.PROCESS_CMD}\"")
+        sb.append(", \"process_cmd_list\":[{\"type\":\"audio\", \"cmd\":\"${ProcessCommand.END_AND_START_ASR}\"")
+        hospitalId?.let {
+            sb.append(",\"hospital_id\":\"$it\"")
+        }
+        spkList?.let { list->
+            sb.append(",\"spk_list\":[")
+            list.forEachIndexed { index, item ->
+                if (index > 0){
+                    sb.append(",")
+                }
+                sb.append("{")
+                item.spkId?.let {
+                    sb.append("\"spk_id\":\"${item.spkId}\"")
+                }
+                item.spkName?.let {
+                    if (item.spkId != null) {
+                        sb.append(",")
+                    }
+                    sb.append("\"spk_name\":\"${item.spkName}\"")
+                }
+                sb.append("}")
+            }
+            sb.append("]")
+        }
+        sb.append("}]}")
 
-        val list: MutableList<ProcessCmdListDTO> = ArrayList()
-        list.add(dto)
-        message.processCmdList = list
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage(sb.toString())
     }
 
     override fun endAsr() {
-        val message = SendCommandMessage()
-        message.signal = SignalCommand.PROCESS_CMD
+//        val message = SendCommandMessage()
+//        message.signal = SignalCommand.PROCESS_CMD
+//
+//        val dto = ProcessCmdListDTO()
+//        dto.type = "audio"
+//        dto.cmd = ProcessCommand.END_ASR
+//
+//        val list: MutableList<ProcessCmdListDTO> = ArrayList()
+//        list.add(dto)
+//        message.processCmdList = list
 
-        val dto = ProcessCmdListDTO()
-        dto.type = "audio"
-        dto.cmd = ProcessCommand.END_ASR
-
-        val list: MutableList<ProcessCmdListDTO> = ArrayList()
-        list.add(dto)
-        message.processCmdList = list
-
-        mSocketManager.sendWebSocketMessage(gson.toJson(message, SendCommandMessage::class.java))
+        mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.PROCESS_CMD}\",\"process_cmd_list\":[{\"type\":\"audio\", \"cmd\":\"${ProcessCommand.END_ASR}\"}]}")
     }
 
     override fun startLocalVideo(frontCamera: Boolean, renderer: SurfaceViewRenderer?) {
@@ -398,16 +505,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.startLocalVideo(frontCamera, renderer)
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = true
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = true
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":true}")
         }
     }
 
@@ -420,16 +522,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.stopLocalVideo()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = false
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = false
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":false}")
         }
     }
 
@@ -437,16 +534,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.muteLocalVideo(mute)
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = !mute
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = !mute
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":${!mute}}")
         }
     }
 
@@ -489,16 +581,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.startLocalAudio()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.AUDIO_AVAILABLE
-            message.available = true
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.AUDIO_AVAILABLE
+//            message.available = true
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.AUDIO_AVAILABLE}\",\"available\":${true}}")
         }
     }
 
@@ -506,16 +593,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.stopLocalAudio()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.AUDIO_AVAILABLE
-            message.available = false
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.AUDIO_AVAILABLE
+//            message.available = false
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.AUDIO_AVAILABLE}\",\"available\":${false}}")
         }
     }
 
@@ -523,16 +605,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.muteLocalAudio(mute)
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.AUDIO_AVAILABLE
-            message.available = !mute
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.AUDIO_AVAILABLE
+//            message.available = !mute
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.AUDIO_AVAILABLE}\",\"available\":${!mute}}")
         }
     }
 
@@ -556,16 +633,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.startScreenCapture(encParam, renderer)
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = true
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = true
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":${true}}")
         }
     }
 
@@ -573,16 +645,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.stopScreenCapture()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = false
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = false
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":${false}}")
         }
     }
 
@@ -590,16 +657,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.pauseScreenCapture()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = false
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = false
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":${false}}")
         }
     }
 
@@ -607,16 +669,11 @@ class WXRTCImpl : WXRTC(), SocketListener, RTCListener {
         mRTCManager.resumeScreenCapture()
 
         if (mRoomId.isNotEmpty()) {
-            val message = SendCommandMessage()
-            message.signal = SignalCommand.VIDEO_AVAILABLE
-            message.available = true
+//            val message = SendCommandMessage()
+//            message.signal = SignalCommand.VIDEO_AVAILABLE
+//            message.available = true
 
-            mSocketManager.sendWebSocketMessage(
-                gson.toJson(
-                    message,
-                    SendCommandMessage::class.java
-                )
-            )
+            mSocketManager.sendWebSocketMessage("{\"signal\":\"${SignalCommand.VIDEO_AVAILABLE}\",\"available\":${true}}")
         }
     }
 

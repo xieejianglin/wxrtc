@@ -649,26 +649,26 @@ public class EglRenderer implements VideoSink {
       drawnAspectRatio = layoutAspectRatio != 0f ? layoutAspectRatio : frameAspectRatio;
     }
 
-   float scaleX = 1f;
-   float scaleY = 1f;
+    float scaleX = 1f;
+    float scaleY = 1f;
 
-   if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FILL) {
-     if (frameAspectRatio > drawnAspectRatio) {
-       scaleX = drawnAspectRatio / frameAspectRatio;
-       scaleY = 1f;
-     } else {
-       scaleX = 1f;
-       scaleY = frameAspectRatio / drawnAspectRatio;
-     }
-   } else if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FIT) {
-     if (frameAspectRatio > drawnAspectRatio) {
-       scaleX = 1f;
-       scaleY = frameAspectRatio / drawnAspectRatio;
-     } else {
-       scaleX = drawnAspectRatio / frameAspectRatio;
-       scaleY = 1f;
-     }
-   }
+    if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FILL) {
+      if (frameAspectRatio > drawnAspectRatio) {
+        scaleX = drawnAspectRatio / frameAspectRatio;
+        scaleY = 1f;
+      } else {
+        scaleX = 1f;
+        scaleY = frameAspectRatio / drawnAspectRatio;
+      }
+    } else if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FIT) {
+      if (frameAspectRatio > drawnAspectRatio) {
+        scaleX = 1f;
+        scaleY = frameAspectRatio / drawnAspectRatio;
+      } else {
+        scaleX = drawnAspectRatio / frameAspectRatio;
+        scaleY = 1f;
+      }
+    }
 
     drawMatrix.reset();
     drawMatrix.preTranslate(0.5f, 0.5f);

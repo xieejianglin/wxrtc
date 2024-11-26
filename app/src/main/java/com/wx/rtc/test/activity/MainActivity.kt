@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     private val mUserId = "123456789"
     private val mAppId = "2"
     private val mRoomId = "998839"
-    private var localVideoInLocalView = true
+    private var localVideoInLocalView = false
     private var isFrontCamera = true
     private var remoteUserId: String? = null
     private var isScreenCapture = false
@@ -88,12 +88,12 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         param.videoMaxBitrate = 3000
         param.videoFps = 30
         param.videoResolution = WXRTCDef.WXRTC_VIDEO_RESOLUTION_1920_1080
-        param.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT
+        param.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
         mWXRTC.setRTCVideoParam(param)
         mWXRTC.setRTCListener(this)
 
         val params = WXRTCDef.WXRTCRenderParams()
-        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
         params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
         params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
         mWXRTC.setLocalRenderParams(params)
@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
                     }
                 } else {
                     mWXRTC.updateLocalVideo(remoteVideoView)
-                    localVideoView?.visibility = View.GONE
+                    localVideoView?.visibility = GONE
                     remoteUserId?.let { userId ->
                         mWXRTC.updateRemoteVideo(userId, localVideoView)
                     }
@@ -238,13 +238,18 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     }
 
     override fun onBackPressed() {
-        mWXRTC.stopScreenCapture()
-        mWXRTC.stopLocalVideo()
-        mWXRTC.stopLocalAudio()
-        mWXRTC.endProcess()
-        mWXRTC.exitRoom()
-        mWXRTC.logout()
-//        super.onBackPressed()
+        if (mWXRTC.isEnterRoom) {
+            mWXRTC.stopScreenCapture()
+            mWXRTC.stopLocalVideo()
+            mWXRTC.stopLocalAudio()
+            mWXRTC.endProcess()
+            mWXRTC.exitRoom()
+        }
+        if (mWXRTC.isLogin) {
+            mWXRTC.logout()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     override fun onDestroy() {
@@ -269,8 +274,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onEnterRoom() {
         Toast.makeText(this, "进入房间", Toast.LENGTH_SHORT).show()
-        localVideoInLocalView = false
-        mWXRTC.startLocalVideo(isFrontCamera, remoteVideoView)
+//        localVideoInLocalView = false
+        mWXRTC.startLocalVideo(isFrontCamera, if (localVideoInLocalView) localVideoView else remoteVideoView)
         mWXRTC.startLocalAudio()
 
 //        mWXRTC.startProcess()
@@ -288,7 +293,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onRemoteUserEnterRoom(userId: String) {
         val params = WXRTCDef.WXRTCRenderParams()
-        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
         params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
         params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
         mWXRTC.setRemoteRenderParams(userId, params)

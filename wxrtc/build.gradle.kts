@@ -57,7 +57,6 @@ dependencies {
     implementation(libs.annotation.jvm)
     implementation(libs.okhttp)
     implementation(libs.gson)
-    implementation(libs.luban)
 }
 
 

@@ -65,7 +65,7 @@ internal class RTCManager : PeerConnectionEvents {
     private var remoteAudioAllMute = false
     private var remoteAudioAllVolume = 0
     private val eglBase: EglBase = EglBase.create()
-    private var mContext: Context? = null
+    private lateinit var mContext: Context
     private var mVideoEncParam: WXRTCVideoEncParam = WXRTCVideoEncParam()
 
     private val localProxyVideoSink = ProxyVideoSink()

@@ -156,6 +156,7 @@ public class SurfaceViewRenderer extends SurfaceView
   public void setScalingType(RendererCommon.ScalingType scalingType) {
     ThreadUtils.checkIsOnMainThread();
     videoLayoutMeasure.setScalingType(scalingType);
+    eglRenderer.setScaleType(scalingType);
     requestLayout();
   }
 
@@ -163,6 +164,7 @@ public class SurfaceViewRenderer extends SurfaceView
       RendererCommon.ScalingType scalingTypeMismatchOrientation) {
     ThreadUtils.checkIsOnMainThread();
     videoLayoutMeasure.setScalingType(scalingTypeMatchOrientation, scalingTypeMismatchOrientation);
+    eglRenderer.setScaleType(scalingTypeMatchOrientation);
     requestLayout();
   }
 

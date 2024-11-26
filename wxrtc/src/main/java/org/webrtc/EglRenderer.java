@@ -128,6 +128,7 @@ public class EglRenderer implements VideoSink {
   // These variables are synchronized on `layoutLock`.
   private final Object layoutLock = new Object();
   private float layoutAspectRatio;
+  private RendererCommon.ScalingType scalingType;
   // If true, mirrors the video stream horizontally.
   private boolean mirrorHorizontally;
   // If true, mirrors the video stream vertically.
@@ -356,6 +357,16 @@ public class EglRenderer implements VideoSink {
   public void setLayoutAspectRatio(float layoutAspectRatio) {
     synchronized (layoutLock) {
       this.layoutAspectRatio = layoutAspectRatio;
+    }
+  }
+
+  /**
+   * Set layout aspect ratio. This is used to crop frames when rendering to avoid stretched video.
+   * Set this to 0 to disable cropping.
+   */
+  public void setScaleType(RendererCommon.ScalingType scalingType) {
+    synchronized (layoutLock) {
+      this.scalingType = scalingType;
     }
   }
 
@@ -638,35 +649,45 @@ public class EglRenderer implements VideoSink {
       drawnAspectRatio = layoutAspectRatio != 0f ? layoutAspectRatio : frameAspectRatio;
     }
 
-   float scaleX;
-   float scaleY;
+   float scaleX = 1f;
+   float scaleY = 1f;
 
-    if (frameAspectRatio > drawnAspectRatio) {
-      scaleX = drawnAspectRatio / frameAspectRatio;
-      scaleY = 1f;
-    } else {
-      scaleX = 1f;
-      scaleY = frameAspectRatio / drawnAspectRatio;
-    }
-
-//    scaleX = 1.25f;
-//    scaleY = 1f;
+   if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FILL) {
+     if (frameAspectRatio > drawnAspectRatio) {
+       scaleX = drawnAspectRatio / frameAspectRatio;
+       scaleY = 1f;
+     } else {
+       scaleX = 1f;
+       scaleY = frameAspectRatio / drawnAspectRatio;
+     }
+   } else if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FIT) {
+     if (frameAspectRatio > drawnAspectRatio) {
+       scaleX = 1f;
+       scaleY = frameAspectRatio / drawnAspectRatio;
+     } else {
+       scaleX = drawnAspectRatio / frameAspectRatio;
+       scaleY = 1f;
+     }
+   }
 
     drawMatrix.reset();
     drawMatrix.preTranslate(0.5f, 0.5f);
     drawMatrix.preScale(mirrorHorizontally ? -1f : 1f, mirrorVertically ? -1f : 1f);
-    drawMatrix.preScale(scaleX, scaleY);
+    if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FILL) {
+      drawMatrix.preScale(scaleX, scaleY);
+    }
     drawMatrix.preTranslate(-0.5f, -0.5f);
-//    drawMatrix.mapRect(new RectF(400f, 0f, 2800f, 1080f), new RectF(0f, 0f, 2400f, 1080f));
-//    drawMatrix.setRectToRect(new RectF(0f, 0f, 3200f, 1080f), new RectF(0f, 0f, 2400f, 1080f), CENTER);
     try {
       if (shouldRenderFrame) {
-//        int viewWidth = (int) Math.floor(eglBase.surfaceWidth() * (2 - scaleX));
-//        int x = (int) Math.floor(eglBase.surfaceWidth() * (scaleX - 1) / 2);
         GLES20.glClearColor(0 /* red */, 0 /* green */, 0 /* blue */, 0 /* alpha */);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-        frameDrawer.drawFrame(frame, drawer, drawMatrix, 0 /* viewportX */, 0 /* viewportY */,
-                eglBase.surfaceWidth(), eglBase.surfaceHeight());
+        if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FILL) {
+          frameDrawer.drawFrame(frame, drawer, drawMatrix, 0 /* viewportX */, 0 /* viewportY */,
+                  eglBase.surfaceWidth(), eglBase.surfaceHeight());
+        } else if (this.scalingType == RendererCommon.ScalingType.SCALE_ASPECT_FIT) {
+          frameDrawer.drawFrame(frame, drawer, drawMatrix, Math.round((eglBase.surfaceWidth() - eglBase.surfaceWidth() / scaleX) / 2), Math.round((eglBase.surfaceHeight() - eglBase.surfaceHeight() / scaleY) / 2),
+                  Math.round(eglBase.surfaceWidth() / scaleX), Math.round(eglBase.surfaceHeight() / scaleY));
+        }
 
         final long swapBuffersStartTimeNs = System.nanoTime();
         swapBuffersOnRenderThread(frame, swapBuffersStartTimeNs);

@@ -392,8 +392,6 @@ internal class RTCManager : PeerConnectionEvents {
         } else if (params.fillMode == WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT) {
             renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT)
         }
-//        renderer.setEnableHardwareScaler(false)
-//        renderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL)
         if (params.mirrorType == WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO) {
             if (!isScreenCapture && isLocalrenderer) {
                 renderer.setMirror(useFrontCamera)
@@ -690,18 +688,6 @@ internal class RTCManager : PeerConnectionEvents {
     }
 
     override fun onLocalDescription(pc: PeerConnectionClient, sdp: SessionDescription) {
-        CoroutineScope(Dispatchers.Main).launch {
-            publishPCClient?.let {
-                if (pc == it) {
-                    if (publishVideoSendEnabled) {
-                        startLocalVideo(useFrontCamera, localRenderer)
-                    } else {
-                        stopLocalVideo()
-                    }
-                    pc.setVideoEncParam(mVideoEncParam)
-                }
-            }
-        }
     }
 
     override fun onIceCandidate(pc: PeerConnectionClient, candidate: IceCandidate) {
@@ -729,6 +715,12 @@ internal class RTCManager : PeerConnectionEvents {
         CoroutineScope(Dispatchers.Main).launch {
             publishPCClient?.let {
                 if (pc == it) {
+                    pc.setVideoEncParam(mVideoEncParam)
+                    if (publishVideoSendEnabled) {
+                        startLocalVideo(useFrontCamera, localRenderer)
+                    } else {
+                        stopLocalVideo()
+                    }
                     mRTCListener?.onConnected()
                     if (publishAudioSendEnabled) {
                         startLocalAudio()

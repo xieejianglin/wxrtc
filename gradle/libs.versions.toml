@@ -22,6 +22,7 @@ rxjava = "3.1.8"
 rxandroid = "3.0.2"
 luban = "1.1.8"
 utilcodex = "1.31.1"
+webrtc = "126.0.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -43,6 +44,7 @@ rxjava = { group = "io.reactivex.rxjava3", name = "rxjava", version.ref = "rxjav
 rxandroid = { group = "io.reactivex.rxjava3", name = "rxandroid", version.ref = "rxandroid" }
 luban = { group = "top.zibin", name = "Luban", version.ref = "luban" }
 utilcodex = { group = "com.blankj", name = "utilcodex", version.ref = "utilcodex" }
+webrtc = { group = "com.pexip.webrtc", name = "webrtc", version.ref = "webrtc" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

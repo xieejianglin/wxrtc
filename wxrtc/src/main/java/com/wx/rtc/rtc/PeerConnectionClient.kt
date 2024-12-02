@@ -698,6 +698,17 @@ internal class PeerConnectionClient(
             localAudioSender = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO, RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY, mediaStreamLabels)).sender
 //            peerConnection!!.addTrack(createVideoTrack(false), mediaStreamLabels)
 //            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
+
+            localVideoTrack?.let {
+                if (it != localVideoSender?.track()) {
+                    localVideoSender?.setTrack(it, true)
+                }
+            }
+            localAudioTrack?.let {
+                if (it != localAudioSender?.track()) {
+                    localAudioSender?.setTrack(it, true)
+                }
+            }
         } else {
             remoteVideoTrack = peerConnection!!.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_VIDEO).receiver.track() as VideoTrack?
             // We can add the renderers right away because we don't need to wait for an
@@ -917,12 +928,16 @@ internal class PeerConnectionClient(
 
     fun startAudioCapture() {
         executor.execute {
-            if (localAudioSender == null) {
-                return@execute
-            }
-            if (audioSource == null) {
+//            if (localAudioSender == null) {
+//                return@execute
+//            }
+            if (audioSource == null && audioConstraints != null) {
                 val track = createAudioTrack()
-                localAudioSender?.setTrack(track, true)
+                localAudioSender?.let { sender->
+                    if (track != sender.track()) {
+                        sender.setTrack(track, true)
+                    }
+                }
             }
 
             audioDeviceModule?.resumeRecord()
@@ -1088,28 +1103,36 @@ internal class PeerConnectionClient(
 
     fun startVideoSource(frontCamera: Boolean) {
         executor.execute {
-            if (localVideoSender == null) {
-                return@execute
-            }
+//            if (localVideoSender == null) {
+//                return@execute
+//            }
             if (videoCapturer == null || !(videoCapturer is CameraVideoCapturer)) {
                 val track = createVideoTrack(false)
-                localVideoSender?.setTrack(track, true)
-            }
+                localVideoSender?.let { sender->
+                    if (track != sender.track()) {
+                        sender.setTrack(track, true)
+                    }
+                }
 
-            try {
-                videoCapturer?.stopCapture()
-            } catch (e: InterruptedException) {
-            }
+                videoCapturer?.let {
+                    if (!(it is CameraVideoCapturer)) {
+                        try {
+                            it.stopCapture()
+                        } catch (e: InterruptedException) {
+                        }
+                    }
+                }
 
-            this.videoCapturer = createVideoCapturer(frontCamera)?.apply {
-                initialize(
-                    surfaceTextureHelper,
-                    appContext,
-                    videoSource!!.capturerObserver
-                )
-                Log.d(TAG, "Restart video source.")
-                val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
-                startCapture(size.width, size.height, videoParam.videoFps)
+                this.videoCapturer = createVideoCapturer(frontCamera)?.apply {
+                    initialize(
+                        surfaceTextureHelper,
+                        appContext,
+                        videoSource!!.capturerObserver
+                    )
+                    Log.d(TAG, "Restart video source.")
+                    val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
+                    startCapture(size.width, size.height, videoParam.videoFps)
+                }
             }
         }
     }

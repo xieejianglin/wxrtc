@@ -1,37 +1,18 @@
 package com.wx.rtc.rtc
 
 import android.content.Context
-import android.content.Intent
 import android.graphics.Bitmap
-import android.text.TextUtils
 import android.util.Log
-import com.wx.rtc.Config
-import com.wx.rtc.Config.RECONNECT_MAX_NUM
-import com.wx.rtc.Config.RECONNECT_MILLIS
 import com.wx.rtc.WXRTCDef
 import com.wx.rtc.WXRTCDef.WXRTCRenderParams
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.rtc.PeerConnectionClient.PeerConnectionEvents
-import com.wx.rtc.rtc.PeerConnectionClient.PeerConnectionParameters
-import com.wx.rtc.utils.RTCUtils.getVideoResolution
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Call
-import okhttp3.Callback
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
 import org.webrtc.EglBase
 import org.webrtc.EglRenderer
 import org.webrtc.IceCandidate
@@ -40,12 +21,11 @@ import org.webrtc.RendererCommon
 import org.webrtc.SessionDescription
 import org.webrtc.StatsReport
 import org.webrtc.SurfaceViewRenderer
-import top.zibin.luban.Luban
+import com.wx.rtc.utils.luban.Luban
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 internal class RTCManager : PeerConnectionEvents {
     private var publishPCClient: PeerConnectionClient? = null

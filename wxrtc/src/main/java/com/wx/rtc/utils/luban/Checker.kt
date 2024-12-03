@@ -1,4 +1,4 @@
-package top.zibin.luban
+package com.wx.rtc.utils.luban
 
 import android.graphics.BitmapFactory
 import android.util.Log

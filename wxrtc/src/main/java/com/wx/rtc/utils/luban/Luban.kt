@@ -1,4 +1,4 @@
-package top.zibin.luban
+package com.wx.rtc.utils.luban
 
 import android.content.Context
 import android.net.Uri

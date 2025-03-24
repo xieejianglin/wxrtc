@@ -51,7 +51,6 @@ kotlin {
 }
 
 dependencies {
-    implementation(libs.core.ktx)
     implementation(libs.kotlin.stdlib.jdk8)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.annotation.jvm)

@@ -2,10 +2,12 @@ package com.wx.rtc.utils
 
 import android.util.Size
 import com.wx.rtc.WXRTCDef
+import com.wx.rtc.WXRTCDef.Companion.WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
+import com.wx.rtc.WXRTCDef.Companion.WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT
 
 internal object RTCUtils {
     @JvmStatic
-    fun getVideoResolution(videoResolution: Int): Size {
+    fun getVideoResolution(videoResolutionMode: Int, videoResolution: Int): Size {
         var videoWidth = 0
         var videoHeight = 0
         when (videoResolution) {
@@ -110,6 +112,11 @@ internal object RTCUtils {
             }
 
             else -> {}
+        }
+        if (videoResolutionMode == WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT) {
+            val tempHeight = videoHeight
+            videoHeight = videoWidth
+            videoWidth = tempHeight
         }
         return Size(videoWidth, videoHeight)
     }

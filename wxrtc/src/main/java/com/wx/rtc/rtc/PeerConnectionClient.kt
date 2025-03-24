@@ -296,7 +296,7 @@ internal class PeerConnectionClient(
 
     fun setVideoEncParam(param: WXRTCVideoEncParam) {
         if (videoParam.videoResolution != param.videoResolution || videoParam.videoFps != param.videoFps) {
-            val size = getVideoResolution(param.videoResolution)
+            val size = getVideoResolution(param.videoResolutionMode, param.videoResolution)
             changeVideoSource(size.width, size.height, param.videoFps)
         }
         if (videoParam.videoMinBitrate != param.videoMinBitrate || videoParam.videoMaxBitrate != param.videoMaxBitrate) {
@@ -308,7 +308,7 @@ internal class PeerConnectionClient(
 
     fun setScreenEncParamCapture(param: WXRTCVideoEncParam) {
 //        if (screenVideoEncParam.videoResolution != param.videoResolution || screenVideoEncParam.videoFps != param.videoFps) {
-            val size = getVideoResolution(param.videoResolution)
+            val size = getVideoResolution(param.videoResolutionMode, param.videoResolution)
             changeVideoSource(size.width, size.height, param.videoFps)
 //        }
 //        if (screenVideoEncParam.videoMinBitrate != param.videoMinBitrate || screenVideoEncParam.videoMaxBitrate != param.videoMaxBitrate) {
@@ -586,7 +586,7 @@ internal class PeerConnectionClient(
     private fun createMediaConstraintsInternal() {
         // Create video constraints if video call is enabled.
         if (isPublish) {
-            val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
+            val size = RTCUtils.getVideoResolution(videoParam.videoResolutionMode, videoParam.videoResolution)
             Logging.d(TAG, "Capturing format: ${size.width}x${size.height}@${videoParam.videoFps}")
         }
         // Create audio constraints.
@@ -1130,7 +1130,7 @@ internal class PeerConnectionClient(
                         videoSource!!.capturerObserver
                     )
                     Log.d(TAG, "Restart video source.")
-                    val size = RTCUtils.getVideoResolution(videoParam.videoResolution)
+                    val size = RTCUtils.getVideoResolution(videoParam.videoResolutionMode, videoParam.videoResolution)
                     startCapture(size.width, size.height, videoParam.videoFps)
                 }
             }
@@ -1355,7 +1355,7 @@ internal class PeerConnectionClient(
                         videoSource!!.capturerObserver
                     )
                     Log.d(TAG, "Restart video source.")
-                    val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolution)
+                    val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolutionMode, screenVideoEncParam.videoResolution)
                     startCapture(size.width, size.height, screenVideoEncParam.videoFps)
 
                     setScreenEncParamCapture(screenVideoEncParam)
@@ -1378,7 +1378,7 @@ internal class PeerConnectionClient(
                                             videoSource!!.capturerObserver
                                         )
                                         Log.d(TAG, "Restart video source.")
-                                        val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolution)
+                                        val size = RTCUtils.getVideoResolution(screenVideoEncParam.videoResolutionMode, screenVideoEncParam.videoResolution)
                                         startCapture(size.width, size.height, screenVideoEncParam.videoFps)
 
                                         setScreenEncParamCapture(screenVideoEncParam)

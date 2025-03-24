@@ -18,16 +18,22 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.lifecycleScope
 import com.blankj.utilcode.util.ConvertUtils
 import com.google.gson.GsonBuilder
 import com.wx.rtc.WXRTC
 import com.wx.rtc.WXRTCDef
+import com.wx.rtc.WXRTCDef.Companion.WXRTC_VIDEO_ROTATION_0
+import com.wx.rtc.WXRTCDef.Companion.WXRTC_VIDEO_ROTATION_90
 import com.wx.rtc.WXRTCDef.WXRTCVideoEncParam
 import com.wx.rtc.WXRTCListener
 import com.wx.rtc.WXRTCSnapshotListener
 import com.wx.rtc.test.R
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.webrtc.SurfaceViewRenderer
 import java.io.File
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : AppCompatActivity(), WXRTCListener {
     companion object {
@@ -92,8 +98,11 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
         mWXRTC.setRTCVideoParam(param)
         mWXRTC.setRTCListener(this)
 
+        mWXRTC.startLocalVideo(isFrontCamera, if (localVideoInLocalView) localVideoView else remoteVideoView)
+        mWXRTC.startLocalAudio()
+
         val params = WXRTCDef.WXRTCRenderParams()
-        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
         params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
         params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
         mWXRTC.setLocalRenderParams(params)
@@ -142,7 +151,10 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
                 val encParam = WXRTCVideoEncParam()
                 encParam.videoResolution = WXRTCDef.WXRTC_VIDEO_RESOLUTION_1920_1080
-                encParam.videoResolutionMode = WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
+                encParam.videoResolutionMode = if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                        WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_PORTRAIT
+                    else
+                        WXRTCDef.WXRTC_VIDEO_RESOLUTION_MODE_LANDSCAPE
                 encParam.videoFps = 10
                 encParam.videoMinBitrate = 2800
                 encParam.videoMaxBitrate = 3000
@@ -243,6 +255,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
             mWXRTC.stopLocalVideo()
             mWXRTC.stopLocalAudio()
             mWXRTC.endProcess()
+            mWXRTC.endRecord()
             mWXRTC.exitRoom()
         }
         if (mWXRTC.isLogin) {
@@ -275,16 +288,26 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
     override fun onEnterRoom() {
         Toast.makeText(this, "进入房间", Toast.LENGTH_SHORT).show()
 //        localVideoInLocalView = false
-        mWXRTC.startLocalVideo(isFrontCamera, if (localVideoInLocalView) localVideoView else remoteVideoView)
-        mWXRTC.startLocalAudio()
+//        mWXRTC.startLocalVideo(isFrontCamera, if (localVideoInLocalView) localVideoView else remoteVideoView)
+//        mWXRTC.startLocalAudio()
 
 //        mWXRTC.startProcess()
 //        mWXRTC.startAsr(mAppId, null)
 //        mWXRTC.startRecord("222222", "{\"order_id\":\"222222\"}")
+//        mWXRTC.startRecord()
 
         val speaker = WXRTC.getSpeaker(10000L, "测试")
         speaker.spkId = 1000L
         speaker.spkName = "测试2"
+
+        lifecycleScope.launch {
+            while (mWXRTC.cameraZoom < mWXRTC.cameraMaxZoom) {
+                delay(3.seconds)
+                mWXRTC.cameraZoom += 1
+            }
+            delay(3.seconds)
+            mWXRTC.cameraZoom = 0
+        }
     }
 
     override fun onExitRoom(reason: Int) {
@@ -293,7 +316,7 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
 
     override fun onRemoteUserEnterRoom(userId: String) {
         val params = WXRTCDef.WXRTCRenderParams()
-        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FILL
+        params.fillMode = WXRTCDef.WXRTC_VIDEO_RENDER_MODE_FIT
         params.rotation = WXRTCDef.WXRTC_VIDEO_ROTATION_0
         params.mirrorType = WXRTCDef.WXRTC_VIDEO_MIRROR_TYPE_AUTO
         mWXRTC.setRemoteRenderParams(userId, params)

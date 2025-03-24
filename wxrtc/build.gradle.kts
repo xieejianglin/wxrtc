@@ -53,7 +53,7 @@ kotlin {
 dependencies {
     implementation(libs.kotlin.stdlib.jdk8)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.annotation.jvm)
+    implementation(libs.annotation)
     implementation(libs.okhttp)
 }
 

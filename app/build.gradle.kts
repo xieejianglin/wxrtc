@@ -62,7 +62,7 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.kotlin.stdlib.jdk8)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.annotation.jvm)
+    implementation(libs.annotation)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.lifecycle.runtime)

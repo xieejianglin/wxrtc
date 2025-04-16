@@ -1106,33 +1106,29 @@ internal class PeerConnectionClient(
 //            if (localVideoSender == null) {
 //                return@execute
 //            }
-            if (videoCapturer == null || !(videoCapturer is CameraVideoCapturer)) {
-                val track = createVideoTrack(false)
-                localVideoSender?.let { sender->
-                    if (track != sender.track()) {
-                        sender.setTrack(track, true)
-                    }
+            val track = createVideoTrack(false)
+            localVideoSender?.let { sender->
+                if (track != sender.track()) {
+                    sender.setTrack(track, true)
                 }
+            }
 
-                videoCapturer?.let {
-                    if (!(it is CameraVideoCapturer)) {
-                        try {
-                            it.stopCapture()
-                        } catch (e: InterruptedException) {
-                        }
-                    }
+            videoCapturer?.let {
+                try {
+                    it.stopCapture()
+                } catch (e: InterruptedException) {
                 }
+            }
 
-                this.videoCapturer = createVideoCapturer(frontCamera)?.apply {
-                    initialize(
-                        surfaceTextureHelper,
-                        appContext,
-                        videoSource!!.capturerObserver
-                    )
-                    Log.d(TAG, "Restart video source.")
-                    val size = RTCUtils.getVideoResolution(videoParam.videoResolutionMode, videoParam.videoResolution)
-                    startCapture(size.width, size.height, videoParam.videoFps)
-                }
+            this.videoCapturer = createVideoCapturer(frontCamera)?.apply {
+                initialize(
+                    surfaceTextureHelper,
+                    appContext,
+                    videoSource!!.capturerObserver
+                )
+                Log.d(TAG, "Restart video source.")
+                val size = RTCUtils.getVideoResolution(videoParam.videoResolutionMode, videoParam.videoResolution)
+                startCapture(size.width, size.height, videoParam.videoFps)
             }
         }
     }

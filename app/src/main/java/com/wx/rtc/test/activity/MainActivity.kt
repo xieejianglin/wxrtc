@@ -379,6 +379,8 @@ class MainActivity : AppCompatActivity(), WXRTCListener {
             WXRTCDef.WXRTC_PROCESS_DATA_RST_OXIMETER -> {}
             WXRTCDef.WXRTC_PROCESS_DATA_RST_WEIGHT_SCALE -> {}
             WXRTCDef.WXRTC_PROCESS_DATA_RST_ECG_MONITOR -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_GLUCOSE_METER -> {}
+            WXRTCDef.WXRTC_PROCESS_DATA_RST_BEDHEAD_SCREEN -> {}
             else -> {}
         }
     }

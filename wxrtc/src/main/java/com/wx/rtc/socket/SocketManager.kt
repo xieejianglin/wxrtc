@@ -322,6 +322,12 @@ internal class SocketManager {
                         if (msgObject.has("capture_image_url")) {
                             resultData.capture_image_url = msgObject.getString("capture_image_url")
                         }
+                        if (msgObject.has("blood_sugar")) {
+                            resultData.blood_sugar = msgObject.getString("blood_sugar")
+                        }
+                        if (msgObject.has("bed_number")) {
+                            resultData.bed_number = msgObject.getString("bed_number")
+                        }
                         message.result = resultData
                     }
                 } catch (throwable: Throwable) {

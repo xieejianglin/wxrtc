@@ -142,6 +142,16 @@ class WXRTCDef {
          * 心电监护仪
          */
         const val WXRTC_PROCESS_DATA_RST_ECG_MONITOR: Int = 13
+
+        /**
+         * 血糖仪
+         */
+        const val WXRTC_PROCESS_DATA_RST_GLUCOSE_METER: Int = 14
+
+        /**
+         * 床头屏
+         */
+        const val WXRTC_PROCESS_DATA_RST_BEDHEAD_SCREEN: Int = 15
     }
 
     /**
@@ -242,6 +252,8 @@ class WXRTCDef {
         var weight_scale: String? = null //体重
         var respiratory_rate: String? = null //呼吸率
         var capture_image_url: String? = null //识别出来的截图
+        var blood_sugar: String? = null //血糖
+        var bed_number: String? = null //床号
     }
 
     class EyeMark {

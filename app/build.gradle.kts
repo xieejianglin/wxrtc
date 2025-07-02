@@ -10,6 +10,7 @@ android {
     defaultConfig {
         applicationId = "com.wx.rtc.test"
         minSdk = libs.versions.minSdk.get().toInt()
+        //noinspection ExpiredTargetSdkVersion
         targetSdk = libs.versions.targetSdk.get().toInt()
         versionCode = 1
         versionName = libs.versions.versionName.get()

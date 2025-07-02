@@ -165,7 +165,7 @@ internal class PeerConnectionClient(
     private var frameVideoSink: VideoSink? = null
 
     private var remoteAudioEnabled = true
-    private var remoteAudioVolume = 100
+    private var remoteAudioVolume = -1
     private var callStartedTimeMs: Long = 0
 
     private var cameraDeviceName: String? = null
@@ -1273,7 +1273,7 @@ internal class PeerConnectionClient(
                 for (receiver in peerConnection!!.receivers) {
                     val track = receiver.track()
                     if (track is AudioTrack) {
-                        if (remoteAudioVolume != 100) {
+                        if (remoteAudioVolume != -1) {
                             track.setVolume(remoteAudioVolume.toDouble())
                         }
                         return track

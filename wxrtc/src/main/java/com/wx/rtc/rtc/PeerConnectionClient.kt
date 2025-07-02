@@ -700,12 +700,12 @@ internal class PeerConnectionClient(
 //            peerConnection!!.addTrack(createAudioTrack(), mediaStreamLabels)
 
             localVideoTrack?.let {
-                if (it != localVideoSender?.track()) {
+                if (it != localVideoSender?.track() && !it.isDispose) {
                     localVideoSender?.setTrack(it, true)
                 }
             }
             localAudioTrack?.let {
-                if (it != localAudioSender?.track()) {
+                if (it != localAudioSender?.track() && !it.isDispose) {
                     localAudioSender?.setTrack(it, true)
                 }
             }

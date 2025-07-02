@@ -110,6 +110,10 @@ public class MediaStreamTrack {
     nativeTrack = 0;
   }
 
+  public boolean isDispose() {
+    return nativeTrack == 0;
+  }
+
   long getNativeMediaStreamTrack() {
     checkMediaStreamTrackExists();
     return nativeTrack;

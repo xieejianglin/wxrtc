@@ -1273,6 +1273,9 @@ internal class PeerConnectionClient(
                 for (receiver in peerConnection!!.receivers) {
                     val track = receiver.track()
                     if (track is AudioTrack) {
+                        if (remoteAudioVolume != 100) {
+                            track.setVolume(remoteAudioVolume.toDouble())
+                        }
                         return track
                     }
                 }

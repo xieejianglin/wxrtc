@@ -1,29 +1,29 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        maven { setUrl("https://maven.aliyun.com/repository/gradle-plugin") }
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
-        mavenCentral()
+        google()
         gradlePluginPortal()
-        maven { setUrl("https://jitpack.io") }
+        mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        maven { setUrl("https://maven.aliyun.com/repository/public") }
         google()
         mavenCentral()
-        maven { setUrl("https://jitpack.io") }
+        maven { setUrl("https://maven-central-asia.storage-download.googleapis.com/maven2/") }
+        maven { setUrl("https://maven.aliyun.com/repository/google") }
+        maven { setUrl("https://maven.aliyun.com/repository/public") }
+        maven {
+            setUrl("https://jitpack.io")
+            content {
+                includeGroupByRegex("com\\.github.*")
+            }
+        }
     }
 }
 
 rootProject.name = "wxrtctest"
-include(":app")
+include(":androidApp")
+include(":shared")
 include(":wxrtc")
- 
